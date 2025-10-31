@@ -1,13 +1,13 @@
-package org.example.logi_track;
+package com.example.logistics;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class LogiTrackApplication {
+public class LogisticsApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(LogiTrackApplication.class, args);
+        SpringApplication.run(LogisticsApplication.class, args);
     }
 
 }

@@ -1,10 +1,10 @@
-package org.example.logi_track;
+package com.example.logistics;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class LogiTrackApplicationTests {
+class LogisticsApplicationTests {
 
     @Test
     void contextLoads() {
