@@ -16,7 +16,7 @@ import lombok.experimental.SuperBuilder;
 public class Client  extends User{
 
     @Column(nullable = false)
-    private String name;
+    private String phone;
     @Column
     private String address;
 }
