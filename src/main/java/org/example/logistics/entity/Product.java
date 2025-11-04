@@ -28,4 +28,8 @@ public class Product {
 
     @Column(nullable = false)
     private Boolean active = true;
+    @Column(nullable = false)
+    private Boolean variable;
+    @Column
+    private String message;
 }

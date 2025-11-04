@@ -21,4 +21,10 @@ public class ResourceNotFoundException extends RuntimeException {
                 resourceName + " non trouvé avec l'email: " + email
         );
     }
+
+    public static ResourceNotFoundException withString(String resourceName , String resourceNameSku, String sku ){
+        return new ResourceNotFoundException(
+                resourceName +"avec ce :"+ resourceNameSku +"non trouve : "+ sku
+        );
+    }
 }
