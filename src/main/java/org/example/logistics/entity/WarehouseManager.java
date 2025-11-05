@@ -2,22 +2,21 @@ package org.example.logistics.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.example.logistics.entity.Enum.Role;
 
 @Entity
-@DiscriminatorValue("CLIENT")
+@DiscriminatorValue("WAREHOUSE_MANAGER")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class Client  extends User{
-
+public class WarehouseManager extends User {
     @Column(nullable = true)
     private String phone;
-    @Column(nullable = true)
-    private String address;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    private Warehouse warehouse;
 }

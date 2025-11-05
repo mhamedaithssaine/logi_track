@@ -28,8 +28,17 @@ public class Product {
 
     @Column(nullable = false)
     private Boolean active = true;
+
     @Column(nullable = false)
-    private Boolean variable;
-    @Column
-    private String message;
+    private Double price = 0.0;
+
+
+
+    @Transient
+    public boolean isAvailable() {
+        return active != null && active;
+    }
+
+
+
 }

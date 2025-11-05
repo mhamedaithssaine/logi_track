@@ -23,15 +23,15 @@ public class SalesOrder {
 
     @ManyToOne
     @JoinColumn(name = "client_id", nullable = false)
-    private Client client;  // Lien vers client (ajoute Client entity si pas fait)
+    private Client client;
 
     @ManyToOne
     @JoinColumn(name = "warehouse_id", nullable = false)
-    private Warehouse warehouse;  // Source
+    private Warehouse warehouse;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Status status = Status.CREATED;  // CREATED, RESERVED, etc.
+    private Status status = Status.CREATED;
 
     @Column
     private LocalDateTime createdAt = LocalDateTime.now();

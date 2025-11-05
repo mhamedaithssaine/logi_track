@@ -11,7 +11,6 @@ public class ProductResponseDto {
     private String name;
     private String category;
     private boolean active;
-    private boolean available;
-    private String message;
+    private Double price ;
 
 }
