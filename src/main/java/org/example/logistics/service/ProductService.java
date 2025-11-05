@@ -26,8 +26,7 @@ public class ProductService {
                 .orElseThrow(()-> ResourceNotFoundException.withString("Product", "Sku", sku));
         ProductResponseDto dto = productMapper.toDto(product);
         boolean available = Boolean.TRUE.equals(product.getActive());
-        dto.setAvailable(available);
-        dto.setMessage(product.getMessage());
+
 
         return dto;
     }
