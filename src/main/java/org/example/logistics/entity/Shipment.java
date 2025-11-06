@@ -39,4 +39,9 @@ public class Shipment {
 
     @Column
     private LocalDateTime plannedDeparture;
+
+    @Transient
+    public boolean isDelivered() {
+        return status == Status_shipment.DELIVERED;
+    }
 }
