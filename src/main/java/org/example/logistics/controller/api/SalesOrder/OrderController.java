@@ -1,4 +1,4 @@
-package org.example.logistics.controller.api;
+package org.example.logistics.controller.api.SalesOrder;
 
 import jakarta.validation.Valid;
 import org.example.logistics.dto.order.SalesOrderCreateDto;
@@ -25,7 +25,7 @@ public class OrderController {
     // get order by id
     @GetMapping("/{id}")
     public ResponseEntity<SalesOrderResponseDto> getOrderById(@PathVariable Long id) {
-        SalesOrderResponseDto response = orderService.getOrderById(id);  // Assume méthode en service
+        SalesOrderResponseDto response = orderService.getOrderById(id);
         return ResponseEntity.ok(response);
     }
 }

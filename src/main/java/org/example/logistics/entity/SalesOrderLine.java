@@ -30,4 +30,7 @@ public class SalesOrderLine {
 
     @Column
     private Double price;
+
+    @Column
+    private Integer backorderQty = 0;
 }

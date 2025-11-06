@@ -7,5 +7,6 @@ public enum Status {
     DELIVERED,
     CANCELED,
     APPROVED,
-    RECEIVED
+    RECEIVED,
+    PARTIAL_RESERVED
 }

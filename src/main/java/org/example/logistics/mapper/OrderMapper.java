@@ -29,7 +29,8 @@ public interface OrderMapper {
     @Mapping(target = "price", ignore = true)
     SalesOrderLine toLineEntity(SalesOrderCreateDto.OrderLineDto lineDto);
 
-
+    @Mapping(source = "client.id", target = "clientId")
+    @Mapping(source = "warehouse.id", target = "warehouseId")
     @Mapping(source = "status", target = "status")
     @Mapping(source = "lines", target = "lines")
     SalesOrderResponseDto toDto(SalesOrder entity);
