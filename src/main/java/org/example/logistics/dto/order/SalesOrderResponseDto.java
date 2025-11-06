@@ -11,7 +11,6 @@ public class SalesOrderResponseDto {
     private Long clientId;
     private Long warehouseId;
     private List<OrderLineResponseDto> lines;
-    private String message;
 
     @Data
     public static class OrderLineResponseDto {
