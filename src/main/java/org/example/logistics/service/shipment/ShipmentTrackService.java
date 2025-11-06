@@ -49,6 +49,7 @@ public class ShipmentTrackService {
         Shipment shipment = optShipment.get();
         shipment.setStatus(newStatus);
         shipmentRepository.save(shipment);
+        System.out.println("Shipment trouvé: " + shipment);
 
         return shipmentTrackMapper.toDto(shipment);
     }

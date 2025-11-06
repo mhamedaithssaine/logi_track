@@ -31,6 +31,6 @@ public class SalesOrderLine {
     @Column
     private Double price;
 
-    @Column
+    @Column(nullable = false)
     private Integer backorderQty = 0;
 }
