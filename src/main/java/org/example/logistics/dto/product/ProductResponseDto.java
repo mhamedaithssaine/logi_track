@@ -10,7 +10,9 @@ public class ProductResponseDto {
     private String sku;
     private String name;
     private String category;
-    private boolean active;
     private Double price ;
+    private boolean active;
+    private String message;
+
 
 }
