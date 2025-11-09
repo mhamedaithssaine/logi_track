@@ -7,17 +7,21 @@ import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.ClientMapper;
 import org.example.logistics.repository.ClientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
+
 public class ClientService {
 
-    private final ClientRepository clientRepository;
-    private final ClientMapper clientMapper;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private  ClientRepository clientRepository;
+    @Autowired
+    private  ClientMapper clientMapper;
+    @Autowired
+    private  PasswordEncoder passwordEncoder;
 
     // Register/Create
     @Transactional
