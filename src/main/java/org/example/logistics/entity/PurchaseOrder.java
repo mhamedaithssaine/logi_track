@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.example.logistics.entity.Enum.Status;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -33,5 +34,5 @@ public class PurchaseOrder {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PurchaseOrderLine> lines;
+    private List<PurchaseOrderLine> lines = new ArrayList<>();
 }
