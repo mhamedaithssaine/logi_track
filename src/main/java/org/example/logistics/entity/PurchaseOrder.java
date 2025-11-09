@@ -33,6 +33,9 @@ public class PurchaseOrder {
     @Column
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column
+    private LocalDateTime canceledAt;
+
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PurchaseOrderLine> lines = new ArrayList<>();
 }
