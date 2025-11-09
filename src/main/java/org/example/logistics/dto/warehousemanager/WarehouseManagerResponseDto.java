@@ -1,21 +1,22 @@
-package org.example.logistics.dto.client;
+package org.example.logistics.dto.warehousemanager;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.logistics.entity.Enum.Role;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ClientResponseDto {
+public class WarehouseManagerResponseDto {
     private Long id;
     private String name;
     private String email;
     private String phone;
-    private String address;
     private String role;
     private Boolean active;
+    private Long warehouseId;
+    private String warehouseName;
     private String message;
 }

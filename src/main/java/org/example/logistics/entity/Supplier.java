@@ -24,4 +24,8 @@ public class Supplier {
 
     @Column
     private String contact;
+
+    @ManyToOne
+    @JoinColumn(name = "warehouse_id") 
+    private Warehouse warehouse;
 }

@@ -1,74 +1,34 @@
 package org.example.logistics.mapper;
 
 
+import org.example.logistics.dto.client.ClientCreateDto;
 import org.example.logistics.dto.client.ClientRegisterDto;
 import org.example.logistics.dto.client.ClientResponseDto;
+import org.example.logistics.dto.client.ClientUpdateDto;
 import org.example.logistics.entity.Client;
 import org.example.logistics.entity.Enum.Role;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.factory.Mappers;
 
-@Component
-public class ClientMapper {
+@Mapper(componentModel = "spring")
+public interface ClientMapper {
 
-    public Client toEntity(ClientRegisterDto dto){
-        if(dto == null){
-            return null;
-        }
+    ClientMapper INSTANCE = Mappers.getMapper(ClientMapper.class);
 
-        return Client.builder()
-                .name(dto.getName())
-                .email(dto.getEmail())
-                .phone(dto.getPhone())
-                .address(dto.getAddress())
-                .passwordHash(null)
-                .role(Role.CLIENT)
-                .active(true)
-                .build();
-    }
+    @Mapping(target = "role", constant = "CLIENT")
+    @Mapping(target = "active", constant = "true")
+    @Mapping(target = "passwordHash", ignore = true)
+    Client toEntity(ClientRegisterDto dto);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "role", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "passwordHash", ignore = true)
+    void updateEntityFromDto(ClientUpdateDto dto, @MappingTarget Client entity);
 
-    public ClientResponseDto toDto(Client entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        return ClientResponseDto.builder()
-                .id(entity.getId())
-                .name(entity.getName())
-                .email(entity.getEmail())
-                .phone(entity.getPhone())
-                .address(entity.getAddress())
-                .role(entity.getRole())
-                .active(entity.getActive())
-                .build();
-    }
-
-
-    public ClientResponseDto toLoginDto(Client entity) {
-        if (entity == null) {
-            return null;
-        }
-
-        ClientResponseDto dto = toDto(entity);
-        String token = generateToken(entity);
-        dto.setToken(token);
-
-        return dto;
-    }
-
-    public void updateEntityFromDto(ClientRegisterDto dto, Client entity) {
-        if (dto == null || entity == null) {
-            return;
-        }
-
-        entity.setName(dto.getName());
-        entity.setEmail(dto.getEmail());
-        entity.setName(dto.getName());
-        entity.setAddress(dto.getAddress());
-    }
-
-    private String generateToken(Client entity) {
-        return entity.getEmail() + "_" + System.currentTimeMillis();
-    }
-
+    @Mapping(target = "message", ignore = true)
+    ClientResponseDto toDto(Client entity);
 }
