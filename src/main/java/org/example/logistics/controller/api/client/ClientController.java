@@ -1,6 +1,7 @@
 package org.example.logistics.controller.api.client;
 
 import jakarta.validation.Valid;
+import org.example.logistics.dto.client.ClientCreateDto;
 import org.example.logistics.dto.client.ClientLoginDto;
 import org.example.logistics.dto.client.ClientRegisterDto;
 import org.example.logistics.dto.client.ClientResponseDto;
@@ -56,9 +57,9 @@ public class ClientController {
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        clientService.delete(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ClientResponseDto> delete(@PathVariable Long id) {
+        ClientResponseDto response = clientService.delete(id);
+        return ResponseEntity.ok(response);
     }
 
 
