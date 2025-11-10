@@ -54,4 +54,11 @@ public class ProductController {
         return ResponseEntity.ok(message);
     }
 
+
+    @PatchMapping("/{sku}/deactivate")
+    public ResponseEntity<ProductResponseDto> deactivateProduct(@PathVariable String sku){
+        ProductResponseDto responseDto = productService.descativeProduit(sku);
+        return ResponseEntity.ok(responseDto);
+    }
+
 }

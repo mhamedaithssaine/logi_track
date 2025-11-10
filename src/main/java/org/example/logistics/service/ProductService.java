@@ -3,11 +3,16 @@ package org.example.logistics.service;
 import org.example.logistics.dto.product.ProductCreateDto;
 import org.example.logistics.dto.product.ProductResponseDto;
 import org.example.logistics.dto.product.ProductUpdateDto;
+import org.example.logistics.entity.Enum.Status;
 import org.example.logistics.entity.Product;
+import org.example.logistics.entity.SalesOrder;
+import org.example.logistics.entity.SalesOrderLine;
 import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.ProductMapper;
 import org.example.logistics.repository.ProductRepository;
+import org.example.logistics.repository.SalesOrderLineRepository;
+import org.example.logistics.repository.SalesOrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +29,12 @@ public class ProductService {
     private ProductRepository productRepository;
     @Autowired
     private ProductMapper productMapper;
+
+    @Autowired
+    private SalesOrderRepository salesOrderRepository;
+
+    @Autowired
+    private SalesOrderLineRepository salesOrderLineRepository;
 
     // Create
     @Transactional
@@ -105,5 +116,39 @@ public class ProductService {
         return "Produit supprimé avec succès";
     }
 
+
+    // pour desactive le produit
+
+    @Transactional
+    public ProductResponseDto descativeProduit(String sku){
+        Product product = productRepository.findBySku(sku)
+                .orElseThrow(() ->  ResourceNotFoundException.withString("Produit", "Sku", sku));
+
+        Optional<SalesOrderLine> salesOrderLineOpt = salesOrderLineRepository.findByProductId(product.getId());
+        if (!salesOrderLineOpt.isPresent()) {
+            throw  ResourceNotFoundException.withId("order" , product.getId());
+        }
+
+        SalesOrder salesOrder = salesOrderLineOpt.get().getSalesOrder();
+
+
+        if (salesOrder.getStatus() != Status.CREATED && salesOrder.getStatus() != Status.RESERVED) {
+            product.setActive(false);
+        } else {
+            throw new RuntimeException(" produit est deja dans une commande creer ou reserve");
+        }
+
+        productRepository.save(product);
+
+        return ProductResponseDto.builder()
+                .id(product.getId())
+                .sku(product.getSku())
+                .name(product.getName())
+                .category(product.getCategory())
+                .price(product.getPrice())
+                .active(product.getActive())
+                .message("Produit désactivé")
+                .build();
+    }
 
 }
