@@ -1,6 +1,7 @@
 package org.example.logistics.controller.api.product;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.example.logistics.dto.product.ProductCreateDto;
 import org.example.logistics.dto.product.ProductResponseDto;
 import org.example.logistics.dto.product.ProductUpdateDto;
@@ -56,9 +57,9 @@ public class ProductController {
 
 
     @PatchMapping("/{sku}/deactivate")
-    public ResponseEntity<ProductResponseDto> deactivateProduct(@PathVariable String sku){
-        ProductResponseDto responseDto = productService.descativeProduit(sku);
-        return ResponseEntity.ok(responseDto);
+    public ResponseEntity<ProductResponseDto> deactivateProduct(@PathVariable @NotBlank String sku){
+        ProductResponseDto response = productService.deactivateProduct(sku);
+        return ResponseEntity.ok(response);
     }
 
 }

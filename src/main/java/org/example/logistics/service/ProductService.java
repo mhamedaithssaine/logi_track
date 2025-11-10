@@ -4,12 +4,14 @@ import org.example.logistics.dto.product.ProductCreateDto;
 import org.example.logistics.dto.product.ProductResponseDto;
 import org.example.logistics.dto.product.ProductUpdateDto;
 import org.example.logistics.entity.Enum.Status;
+import org.example.logistics.entity.Inventory;
 import org.example.logistics.entity.Product;
 import org.example.logistics.entity.SalesOrder;
 import org.example.logistics.entity.SalesOrderLine;
 import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.ProductMapper;
+import org.example.logistics.repository.InventoryRepository;
 import org.example.logistics.repository.ProductRepository;
 import org.example.logistics.repository.SalesOrderLineRepository;
 import org.example.logistics.repository.SalesOrderRepository;
@@ -35,6 +37,9 @@ public class ProductService {
 
     @Autowired
     private SalesOrderLineRepository salesOrderLineRepository;
+
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
     // Create
     @Transactional
@@ -120,24 +125,26 @@ public class ProductService {
     // pour desactive le produit
 
     @Transactional
-    public ProductResponseDto descativeProduit(String sku){
+    public ProductResponseDto deactivateProduct(String sku) {
         Product product = productRepository.findBySku(sku)
-                .orElseThrow(() ->  ResourceNotFoundException.withString("Produit", "Sku", sku));
+                .orElseThrow(() -> ResourceNotFoundException.withString("Produit", "SKU", sku));
 
-        Optional<SalesOrderLine> salesOrderLineOpt = salesOrderLineRepository.findByProductId(product.getId());
-        if (!salesOrderLineOpt.isPresent()) {
-            throw  ResourceNotFoundException.withId("order" , product.getId());
-        }
+        List<Status> activeStatuses = List.of(Status.CREATED, Status.RESERVED);
+        long activeOrderCount = salesOrderLineRepository.countActiveOrdersForProduct(
+                product.getId(), activeStatuses);
 
-        SalesOrder salesOrder = salesOrderLineOpt.get().getSalesOrder();
+        if (activeOrderCount > 0) {
+            throw new RuntimeException("produit est creer ou bien reserve");}
 
+        List<Inventory> inventories = inventoryRepository.findByProductId(product.getId());
 
-        if (salesOrder.getStatus() != Status.CREATED && salesOrder.getStatus() != Status.RESERVED) {
-            product.setActive(false);
-        } else {
-            throw new RuntimeException(" produit est deja dans une commande creer ou reserve");
-        }
+        boolean hasReservedStock = inventories.stream()
+                .anyMatch(inventory -> inventory.getQtyReserved() > 0);
 
+        if (hasReservedStock) {
+            throw new RuntimeException("produit dans le stock");}
+
+        product.setActive(false);
         productRepository.save(product);
 
         return ProductResponseDto.builder()
@@ -147,7 +154,7 @@ public class ProductService {
                 .category(product.getCategory())
                 .price(product.getPrice())
                 .active(product.getActive())
-                .message("Produit désactivé")
+                .message("Produit désactivé avec succès")
                 .build();
     }
 
