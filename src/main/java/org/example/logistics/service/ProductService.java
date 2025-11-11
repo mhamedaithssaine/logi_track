@@ -3,11 +3,18 @@ package org.example.logistics.service;
 import org.example.logistics.dto.product.ProductCreateDto;
 import org.example.logistics.dto.product.ProductResponseDto;
 import org.example.logistics.dto.product.ProductUpdateDto;
+import org.example.logistics.entity.Enum.Status;
+import org.example.logistics.entity.Inventory;
 import org.example.logistics.entity.Product;
+import org.example.logistics.entity.SalesOrder;
+import org.example.logistics.entity.SalesOrderLine;
 import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.ProductMapper;
+import org.example.logistics.repository.InventoryRepository;
 import org.example.logistics.repository.ProductRepository;
+import org.example.logistics.repository.SalesOrderLineRepository;
+import org.example.logistics.repository.SalesOrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +31,15 @@ public class ProductService {
     private ProductRepository productRepository;
     @Autowired
     private ProductMapper productMapper;
+
+    @Autowired
+    private SalesOrderRepository salesOrderRepository;
+
+    @Autowired
+    private SalesOrderLineRepository salesOrderLineRepository;
+
+    @Autowired
+    private InventoryRepository inventoryRepository;
 
     // Create
     @Transactional
@@ -106,4 +122,43 @@ public class ProductService {
     }
 
 
+    // pour desactive le produit
+
+    @Transactional
+    public ProductResponseDto deactivateProduct(String sku) {
+        Product product = productRepository.findBySku(sku)
+                .orElseThrow(() -> ResourceNotFoundException.withString("Produit", "SKU", sku));
+
+        List<Status> activeStatuses = List.of(Status.CREATED, Status.RESERVED);
+        boolean hasActiveOrders = salesOrderLineRepository
+                .countByProductIdAndSalesOrderStatusIn(product.getId(), activeStatuses) > 0;
+
+        if (hasActiveOrders) {
+            throw new RuntimeException("Le produit  est inclus dans une ou plusieurs commandes actives");
+        }
+
+        boolean hasReservedStock = inventoryRepository
+                .existsByProductIdAndQtyReservedGreaterThan(product.getId(), 0);
+
+        if (hasReservedStock) {
+            throw new RuntimeException("Le produit  est possede du stock réserve");
+        }
+
+        product.setActive(false);
+        productRepository.save(product);
+
+        return buildProductResponseDto(product);
+    }
+
+    private ProductResponseDto buildProductResponseDto(Product product) {
+        return ProductResponseDto.builder()
+                .id(product.getId())
+                .sku(product.getSku())
+                .name(product.getName())
+                .category(product.getCategory())
+                .price(product.getPrice())
+                .active(product.getActive())
+                .message("Produit désactivé avec succès")
+                .build();
+    }
 }

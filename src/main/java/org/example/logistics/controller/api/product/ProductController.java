@@ -1,6 +1,7 @@
 package org.example.logistics.controller.api.product;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.example.logistics.dto.product.ProductCreateDto;
 import org.example.logistics.dto.product.ProductResponseDto;
 import org.example.logistics.dto.product.ProductUpdateDto;
@@ -52,6 +53,13 @@ public class ProductController {
     public ResponseEntity<String> deleteProduct(@PathVariable String sku) {
         String message = productService.deleteProduct(sku);
         return ResponseEntity.ok(message);
+    }
+
+
+    @PatchMapping("/{sku}/deactivate")
+    public ResponseEntity<ProductResponseDto> deactivateProduct(@PathVariable @NotBlank String sku){
+        ProductResponseDto response = productService.deactivateProduct(sku);
+        return ResponseEntity.ok(response);
     }
 
 }

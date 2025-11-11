@@ -54,6 +54,12 @@ public class OrderReserveService {
 
             Inventory inv = optInv.get();
             int available = inv.getAvailable();
+            if (available <= 0) {
+                line.setBackorderQty(line.getQuantity());
+                partial = true;
+                message = "Aucun stock disponible pour " + line.getProduct().getSku();
+                System.out.println("Aucun stock dispo pour " + line.getProduct().getSku());
+            }
             if (available < line.getQuantity()) {
                 line.setBackorderQty(line.getQuantity() - available);
                 inv.setQtyReserved(inv.getQtyReserved() + available);
