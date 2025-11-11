@@ -130,23 +130,27 @@ public class ProductService {
                 .orElseThrow(() -> ResourceNotFoundException.withString("Produit", "SKU", sku));
 
         List<Status> activeStatuses = List.of(Status.CREATED, Status.RESERVED);
-        long activeOrderCount = salesOrderLineRepository.countActiveOrdersForProduct(
-                product.getId(), activeStatuses);
+        boolean hasActiveOrders = salesOrderLineRepository
+                .countByProductIdAndSalesOrderStatusIn(product.getId(), activeStatuses) > 0;
 
-        if (activeOrderCount > 0) {
-            throw new RuntimeException("produit est creer ou bien reserve");}
+        if (hasActiveOrders) {
+            throw new RuntimeException("Le produit  est inclus dans une ou plusieurs commandes actives");
+        }
 
-        List<Inventory> inventories = inventoryRepository.findByProductId(product.getId());
-
-        boolean hasReservedStock = inventories.stream()
-                .anyMatch(inventory -> inventory.getQtyReserved() > 0);
+        boolean hasReservedStock = inventoryRepository
+                .existsByProductIdAndQtyReservedGreaterThan(product.getId(), 0);
 
         if (hasReservedStock) {
-            throw new RuntimeException("produit dans le stock");}
+            throw new RuntimeException("Le produit  est possede du stock réserve");
+        }
 
         product.setActive(false);
         productRepository.save(product);
 
+        return buildProductResponseDto(product);
+    }
+
+    private ProductResponseDto buildProductResponseDto(Product product) {
         return ProductResponseDto.builder()
                 .id(product.getId())
                 .sku(product.getSku())
@@ -157,5 +161,4 @@ public class ProductService {
                 .message("Produit désactivé avec succès")
                 .build();
     }
-
 }

@@ -8,6 +8,7 @@ import java.util.Optional;
 
 public interface InventoryRepository extends JpaRepository<Inventory,Long> {
     Optional<Inventory> findByProductIdAndWarehouseId(Long productId, Long warehouseId );
-    List<Inventory> findByProductId(Long productId);
+    boolean existsByProductIdAndQtyReservedGreaterThan(Long productId, int quantity);
+
 
 }

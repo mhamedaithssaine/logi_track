@@ -15,10 +15,8 @@ public interface SalesOrderLineRepository extends JpaRepository<SalesOrderLine, 
 
 
 
-    @Query("SELECT COUNT(sol) FROM SalesOrderLine sol " +
-            "WHERE sol.product.id = :productId " +
-            "AND sol.salesOrder.status IN :statuses")
-    long countActiveOrdersForProduct(@Param("productId") Long productId, @Param("statuses") List<Status> statuses);
+    long countByProductIdAndSalesOrderStatusIn(Long productId, List<Status> statuses);
+
 
 
 
