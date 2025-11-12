@@ -34,10 +34,12 @@ public class SalesOrder {
     @Column(nullable = false)
     private Status status = Status.CREATED;
 
-    @Column
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
     @Column
     private LocalDateTime canceledAt;
 
