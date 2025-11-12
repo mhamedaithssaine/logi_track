@@ -13,6 +13,7 @@ public class SalesOrderReserveResponseDto {
 
     @Data
     public static class  LineReserveDto{
+        private Long id;
         private String sku;
         private Integer requestedQty;
         private Integer reservedQty;

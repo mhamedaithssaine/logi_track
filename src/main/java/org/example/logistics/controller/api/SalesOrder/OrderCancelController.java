@@ -1,4 +1,4 @@
-package org.example.logistics.controller.api.order;
+package org.example.logistics.controller.api.SalesOrder;
 
 import org.example.logistics.dto.order.OrderCancelDto;
 import org.example.logistics.dto.order.OrderCancelResponseDto;
@@ -6,7 +6,6 @@ import org.example.logistics.service.OrderCancelService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/orders")

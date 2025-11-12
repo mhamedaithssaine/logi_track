@@ -14,6 +14,7 @@ public class ShipmentCreateDto {
     @NotBlank(message = "Carrier requis")
     private String carrier;
 
-    @NotBlank(message = "Tracking number requis")
+    @NotBlank(message = "Le numéro de suivi est obligatoire")
     private String trackingNumber;
+
 }

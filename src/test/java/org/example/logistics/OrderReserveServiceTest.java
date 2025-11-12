@@ -1,4 +1,4 @@
-package org.example.logistics.service;
+package org.example.logistics;
 
 import org.example.logistics.dto.order.SalesOrderReserveDto;
 import org.example.logistics.entity.Enum.Status;
@@ -10,6 +10,7 @@ import org.example.logistics.entity.Warehouse;
 import org.example.logistics.mapper.OrderReserveMapper;
 import org.example.logistics.repository.InventoryRepository;
 import org.example.logistics.repository.SalesOrderRepository;
+import org.example.logistics.service.OrderReserveService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -77,26 +78,28 @@ class OrderReserveServiceTest {
     }
 
     @Test
-    void testReserveOrder_ShouldThrowException_WhenStockWouldGoNegative() {
+    void testReserveOrder_ShouldCreateBackorder_WhenStockIsZero() {
         // given
+        inventory.setQtyOnHand(0);
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
                 .orderId(order.getId())
                 .build();
 
         when(salesOrderRepository.findById(order.getId()))
                 .thenReturn(Optional.of(order));
-
         when(inventoryRepository.findByProductIdAndWarehouseId(product.getId(), warehouse.getId()))
                 .thenReturn(Optional.of(inventory));
+        when(orderReserveMapper.toDto(any(SalesOrder.class)))
+                .thenReturn(null);
 
-        // when + then
-        RuntimeException ex = assertThrows(RuntimeException.class,
-                () -> orderReserveService.reserveOrder(dto));
+        // when
+        orderReserveService.reserveOrder(dto);
 
-        assertTrue(ex.getMessage().toLowerCase().contains("stock") ||
-                ex.getMessage().toLowerCase().contains("insuffisant"));
-
-        verify(salesOrderRepository, never()).save(any());
+        // then
+        assertEquals(Status.PARTIAL_RESERVED, order.getStatus());
+        assertEquals(0, inventory.getQtyReserved());
+        assertEquals(10, line.getBackorderQty());
+        verify(inventoryRepository, times(1)).save(any());
     }
 
     @Test

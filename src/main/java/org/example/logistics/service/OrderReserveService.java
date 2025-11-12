@@ -28,7 +28,6 @@ public class OrderReserveService {
     public SalesOrderReserveResponseDto reserveOrder(SalesOrderReserveDto dto) {
         Optional<SalesOrder> optOrder = salesOrderRepository.findById(dto.getOrderId());
         if (optOrder.isEmpty()) {
-            System.out.println("Commande ID " + dto.getOrderId() + " non trouvée en DB");
             throw new RuntimeException("Commande non trouvée ou non créée");
         }
 
@@ -36,7 +35,7 @@ public class OrderReserveService {
         System.out.println("Commande trouvée : ID=" + order.getId() + ", Status=" + order.getStatus());
 
         if (order.getStatus() != Status.CREATED) {
-            System.out.println("Status non CREATED : " + order.getStatus());  // Debug
+            System.out.println("Status non CREATED : " + order.getStatus());
             throw new RuntimeException("Commande non trouvée ou non créée");
         }
 

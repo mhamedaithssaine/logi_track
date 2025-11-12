@@ -29,7 +29,7 @@ class TestSuiteRunner {
     void testMockitoConfiguration() {
         // Test basique pour vérifier que Mockito est disponible
         assertDoesNotThrow(() -> {
-            org.mockito.Mockito.mock(String.class);
+            org.mockito.Mockito.mock(java.util.List.class);
         });
     }
 }

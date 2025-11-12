@@ -60,10 +60,10 @@ public class OutboundService {
         // Update qtyOnHand
         inv.setQtyOnHand(inv.getQtyOnHand() - dto.getQuantity());
 
-        // Save inventory
+        // Save
         Inventory updatedInv = inventoryRepository.save(inv);
 
-        // créer mouvement OUTBOUND
+        // créer
         InventoryMovement movement = outboundMapper.toMovement(dto);
         movement.setProduct(updatedInv.getProduct());
         movement.setWarehouse(updatedInv.getWarehouse());

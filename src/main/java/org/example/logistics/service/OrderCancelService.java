@@ -95,25 +95,6 @@ public class OrderCancelService {
                         )
                 ));
 
-        /* Option 2 : Utiliser findByIdAndStatusIn
-        List<Status> allowedStatuses = Arrays.asList(
-            Status.CREATED,
-            Status.RESERVED,
-            Status.PARTIAL_RESERVED
-        );
-        return salesOrderRepository.findByIdAndStatusIn(orderId, allowedStatuses)
-                .orElseThrow(() -> new OrderCannotBeCanceledException(...));
-        */
-
-        /* Option 3 : Utiliser findByIdAndStatusNotIn
-        List<Status> excludedStatuses = Arrays.asList(
-            Status.SHIPPED,
-            Status.DELIVERED,
-            Status.CANCELED
-        );
-        return salesOrderRepository.findByIdAndStatusNotIn(orderId, excludedStatuses)
-                .orElseThrow(() -> new OrderCannotBeCanceledException(...));
-        */
     }
 
 
@@ -148,14 +129,4 @@ public class OrderCancelService {
     }
 
 
-    @Transactional(readOnly = true)
-    public List<SalesOrder> getCanceledOrdersBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        return salesOrderRepository.findCanceledOrdersBetween(startDate, endDate);
-    }
-
-
-    @Transactional(readOnly = true)
-    public long countCanceledOrders() {
-        return salesOrderRepository.countByStatus(Status.CANCELED);
-    }
 }
