@@ -34,14 +34,15 @@ public class SalesOrder {
     @Column(nullable = false)
     private Status status = Status.CREATED;
 
-    @Column
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private LocalDateTime shippedAt;
-
+    @Column
     private LocalDateTime canceledAt;
+
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SalesOrderLine> lines;
 }

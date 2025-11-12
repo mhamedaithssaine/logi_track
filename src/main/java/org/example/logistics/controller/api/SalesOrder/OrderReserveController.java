@@ -1,4 +1,4 @@
-package org.example.logistics.controller.api.order;
+package org.example.logistics.controller.api.SalesOrder;
 
 import jakarta.validation.Valid;
 import org.example.logistics.dto.order.SalesOrderReserveDto;

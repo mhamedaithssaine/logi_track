@@ -10,6 +10,8 @@ import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderCancelResponseDto {
     private Long orderId;
     private String previousStatus;

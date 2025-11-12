@@ -23,7 +23,7 @@ public class Shipment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @OneToOne(optional = false)
     @JoinColumn(name = "sales_order_id", nullable = false)
     private SalesOrder salesOrder;
 
@@ -39,9 +39,10 @@ public class Shipment {
 
     @Column
     private LocalDateTime plannedDeparture;
-
+    private LocalDateTime shippedAt;
     @Column
-    private LocalDateTime deliveredAT;
+    private LocalDateTime deliveredAt;
+
     @Transient
     public boolean isDelivered() {
         return status == Status_shipment.DELIVERED;

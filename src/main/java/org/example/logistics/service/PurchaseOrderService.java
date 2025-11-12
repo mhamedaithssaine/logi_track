@@ -132,22 +132,30 @@ public class PurchaseOrderService {
     // Helper prive : Update stock + INBOUND movement pour 1 line
     private void receiveLineAndUpdateStock(PurchaseOrderLine line, Supplier supplier, Integer receivedQuantity) {
         if (receivedQuantity > 0) {
-            Optional<Inventory> optInv = inventoryRepository.findByProductIdAndWarehouseId(line.getProduct().getId(), supplier.getWarehouse().getId());
-            if (optInv.isPresent()) {
-                Inventory inv = optInv.get();
-                inv.setQtyOnHand(inv.getQtyOnHand() + receivedQuantity);
-                inventoryRepository.save(inv);
-
-                // Create INBOUND movement
-                InventoryMovement movement = InventoryMovement.builder()
-                        .product(line.getProduct())
-                        .warehouse(inv.getWarehouse())
-                        .type(MovementType.INBOUND)
-                        .quantity(receivedQuantity)
-                        .referenceDoc("PO" + line.getPurchaseOrder().getId())
-                        .build();
-                inventoryMovementRepository.save(movement);
+            if (supplier.getWarehouse() == null) {
+                throw new RuntimeException("Le fournisseur " + supplier.getName() + " n’a pas de warehouse associé !");
             }
+
+            Optional<Inventory> optInv = inventoryRepository.findByProductIdAndWarehouseId(
+                    line.getProduct().getId(),
+                    supplier.getWarehouse().getId()
+            );
+
+            Inventory inv = optInv.orElseThrow(() ->
+                    new RuntimeException("Inventaire non trouvé pour produit " + line.getProduct().getSku()));
+
+            inv.setQtyOnHand(inv.getQtyOnHand() + receivedQuantity);
+            inventoryRepository.save(inv);
+
+            InventoryMovement movement = InventoryMovement.builder()
+                    .product(line.getProduct())
+                    .warehouse(inv.getWarehouse())
+                    .type(MovementType.INBOUND)
+                    .quantity(receivedQuantity)
+                    .referenceDoc("PO" + line.getPurchaseOrder().getId())
+                    .build();
+            inventoryMovementRepository.save(movement);
         }
     }
+
 }

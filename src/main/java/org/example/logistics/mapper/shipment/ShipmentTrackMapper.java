@@ -1,33 +1,33 @@
 package org.example.logistics.mapper.shipment;
 
-import org.example.logistics.dto.shipment.ShipmentTrackDto;
-import org.example.logistics.dto.shipment.ShipmentTrackResponseDto;
-import org.example.logistics.entity.Enum.Status_shipment;
+import org.example.logistics.dto.shipment.ShipmentFullResponseDto;
 import org.example.logistics.entity.SalesOrder;
+import org.example.logistics.entity.SalesOrderLine;
 import org.example.logistics.entity.Shipment;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
+import org.mapstruct.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface ShipmentTrackMapper {
-    ShipmentTrackMapper INSTANCE = Mappers.getMapper(ShipmentTrackMapper.class);
 
+    @Mapping(target = "shipmentId", source = "id")
+    @Mapping(target = "orderId", source = "salesOrder.id")
+    @Mapping(target = "status", expression = "java(entity.getStatus().name())")
+    @Mapping(target = "message", constant = "Suivi de l’expédition")
+    @Mapping(target = "lines", expression = "java(mapLines(entity.getSalesOrder()))")
+    ShipmentFullResponseDto toDto(Shipment entity);
 
-    @Mapping(target = "status", ignore = true)
-    @Mapping(target = "id", source = "orderId")
-    SalesOrder toEntity(ShipmentTrackDto dto);
-
-    @Mapping(source = "status", target = "status")
-    @Mapping(target = "message", expression = "java(getStatusMessage(entity.getStatus()))")
-    ShipmentTrackResponseDto toDto(Shipment entity);
-
-    default String getStatusMessage(Status_shipment status) {
-        switch (status) {
-            case PLANNED: return "Expédition planifiée";
-            case IN_TRANSIT: return "En transit vers vous";
-            case DELIVERED: return "Livraison confirmée";
-            default: return "Statut inconnu";
+    default List<ShipmentFullResponseDto.LineInfo> mapLines(SalesOrder order) {
+        if (order == null || order.getLines() == null) {
+            return List.of();
         }
+        return order.getLines().stream()
+                .map(line -> ShipmentFullResponseDto.LineInfo.builder()
+                        .sku(line.getProduct().getSku())
+                        .quantity(line.getQuantity())
+                        .build())
+                .collect(Collectors.toList());
     }
 }

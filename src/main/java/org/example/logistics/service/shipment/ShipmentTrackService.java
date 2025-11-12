@@ -1,56 +1,73 @@
 package org.example.logistics.service.shipment;
 
+import lombok.RequiredArgsConstructor;
+import org.example.logistics.dto.shipment.ShipmentFullResponseDto;
 import org.example.logistics.dto.shipment.ShipmentTrackDto;
-import org.example.logistics.dto.shipment.ShipmentTrackResponseDto;
-import org.example.logistics.entity.Enum.Status;
-import org.example.logistics.entity.Enum.Status_shipment;
 import org.example.logistics.entity.SalesOrder;
 import org.example.logistics.entity.Shipment;
+import org.example.logistics.entity.Enum.Status_shipment;
+import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.shipment.ShipmentTrackMapper;
 import org.example.logistics.repository.SalesOrderRepository;
 import org.example.logistics.repository.ShipmentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import java.util.Optional;
+
+import java.util.Collections;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class ShipmentTrackService {
-    @Autowired
-    private SalesOrderRepository salesOrderRepository;
 
-    @Autowired
-    private ShipmentRepository shipmentRepository;
+    private final SalesOrderRepository salesOrderRepository;
+    private final ShipmentRepository shipmentRepository;
+    private final ShipmentTrackMapper shipmentTrackMapper;
 
-    @Autowired
-    private ShipmentTrackMapper shipmentTrackMapper;
+    public ShipmentFullResponseDto trackShipment(ShipmentTrackDto dto) {
+        SalesOrder order = salesOrderRepository.findById(dto.getOrderId())
+                .orElseThrow(() ->  ResourceNotFoundException.withId("Commande non trouvée", dto.getOrderId()));
 
+        Shipment shipment = shipmentRepository.findBySalesOrderId(dto.getOrderId())
+                .orElseThrow(() ->  ResourceNotFoundException.withId("Aucune expédition trouvée pour cette commande", dto.getOrderId()));
 
-    public ShipmentTrackResponseDto trackShipment(ShipmentTrackDto dto) {
-        Optional<SalesOrder> optOrder = salesOrderRepository.findById(dto.getOrderId());
-        if (optOrder.isEmpty() || optOrder.get().getStatus() != Status.RESERVED) {
-            throw new RuntimeException("Commande non trouvée ou non réservée (pas d'expédition)");
+        ShipmentFullResponseDto dtoOut = shipmentTrackMapper.toDto(shipment);
+        dtoOut.setLines(order.getLines() == null ? Collections.emptyList() :
+                order.getLines().stream()
+                        .map(l -> ShipmentFullResponseDto.LineInfo.builder()
+                                .sku(l.getProduct().getSku())
+                                .quantity(l.getQuantity())
+                                .build())
+                        .toList()
+        );
+        return dtoOut;
+    }
+
+    public ShipmentFullResponseDto updateStatus(Long shipmentId, Status_shipment newStatus) {
+        Shipment shipment = shipmentRepository.findById(shipmentId)
+                .orElseThrow(() ->  ResourceNotFoundException.withId("Shipment non trouvé",shipmentId));
+
+        shipment.setStatus(newStatus);
+        if (newStatus == Status_shipment.IN_TRANSIT) {
+            shipment.setShippedAt(java.time.LocalDateTime.now());
+        } else if (newStatus == Status_shipment.DELIVERED) {
+            shipment.setDeliveredAt(java.time.LocalDateTime.now());
         }
 
-        Optional<Shipment> optShipment = shipmentRepository.findBySalesOrderId(dto.getOrderId());
-        if (optShipment.isEmpty()) {
-            throw new RuntimeException("Aucune expédition trouvée pour cette commande");
-        }
+        Shipment saved = shipmentRepository.save(shipment);
+        return shipmentTrackMapper.toDto(saved);
+    }
 
-        Shipment shipment = optShipment.get();
+    // Get By id
+    public ShipmentFullResponseDto getById(Long id) {
+        Shipment shipment = shipmentRepository.findById(id)
+                .orElseThrow(() ->  ResourceNotFoundException.withId("Expédition non trouvée avec ID: " , id));
         return shipmentTrackMapper.toDto(shipment);
     }
 
-    public ShipmentTrackResponseDto updateStatus(Long shipmentId, Status_shipment newStatus) {
-        Optional<Shipment> optShipment = shipmentRepository.findById(shipmentId);
-        if (optShipment.isEmpty()) {
-            throw new RuntimeException("Shipment non trouvé");
-        }
-
-        Shipment shipment = optShipment.get();
-        shipment.setStatus(newStatus);
-        shipmentRepository.save(shipment);
-        System.out.println("Shipment trouvé: " + shipment);
-
-        return shipmentTrackMapper.toDto(shipment);
+    // List shipment
+    public List<ShipmentFullResponseDto> getAllShipments() {
+        return shipmentRepository.findAll().stream()
+                .map(shipmentTrackMapper::toDto)
+                .toList();
     }
 }
