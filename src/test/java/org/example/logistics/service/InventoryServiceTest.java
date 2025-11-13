@@ -1,17 +1,14 @@
-package org.example.logistics;
+package org.example.logistics.service;
 
 import org.example.logistics.entity.Inventory;
 import org.example.logistics.entity.Product;
 import org.example.logistics.entity.Warehouse;
 import org.example.logistics.repository.InventoryRepository;
-import org.example.logistics.service.InventoryService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;

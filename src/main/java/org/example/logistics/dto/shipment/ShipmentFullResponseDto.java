@@ -11,6 +11,8 @@ import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ShipmentFullResponseDto {
     private Long shipmentId;
     private Long orderId;

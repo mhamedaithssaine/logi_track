@@ -1,10 +1,12 @@
 package org.example.logistics.dto.order;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.util.List;
 
 @Data
+@Builder
 public class SalesOrderReserveResponseDto {
     private Long id ;
     private String status;

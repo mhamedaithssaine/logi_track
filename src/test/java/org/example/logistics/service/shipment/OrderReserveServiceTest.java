@@ -1,4 +1,4 @@
-package org.example.logistics;
+package org.example.logistics.service.shipment;
 
 import org.example.logistics.dto.order.SalesOrderReserveDto;
 import org.example.logistics.entity.Enum.Status;
@@ -7,6 +7,7 @@ import org.example.logistics.entity.Product;
 import org.example.logistics.entity.SalesOrder;
 import org.example.logistics.entity.SalesOrderLine;
 import org.example.logistics.entity.Warehouse;
+import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.OrderReserveMapper;
 import org.example.logistics.repository.InventoryRepository;
 import org.example.logistics.repository.SalesOrderRepository;
@@ -21,6 +22,7 @@ import java.util.Collections;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class OrderReserveServiceTest {
@@ -55,12 +57,15 @@ class OrderReserveServiceTest {
 
         warehouse = Warehouse.builder()
                 .id(1L)
+                .code("WH-001")
                 .name("WH-Paris")
                 .build();
 
         line = SalesOrderLine.builder()
+                .id(10L)
                 .product(product)
                 .quantity(10)
+                .backorderQty(0)
                 .build();
 
         order = SalesOrder.builder()
@@ -71,14 +76,16 @@ class OrderReserveServiceTest {
                 .build();
 
         inventory = Inventory.builder()
+                .id(1L)
                 .product(product)
                 .warehouse(warehouse)
+                .qtyOnHand(0)
                 .qtyReserved(0)
                 .build();
     }
 
     @Test
-    void testReserveOrder_ShouldCreateBackorder_WhenStockIsZero() {
+    void shouldCreateBackorder_whenStockIsZero() {
         // given
         inventory.setQtyOnHand(0);
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
@@ -89,8 +96,7 @@ class OrderReserveServiceTest {
                 .thenReturn(Optional.of(order));
         when(inventoryRepository.findByProductIdAndWarehouseId(product.getId(), warehouse.getId()))
                 .thenReturn(Optional.of(inventory));
-        when(orderReserveMapper.toDto(any(SalesOrder.class)))
-                .thenReturn(null);
+        when(orderReserveMapper.toDto(any())).thenReturn(null);
 
         // when
         orderReserveService.reserveOrder(dto);
@@ -99,11 +105,11 @@ class OrderReserveServiceTest {
         assertEquals(Status.PARTIAL_RESERVED, order.getStatus());
         assertEquals(0, inventory.getQtyReserved());
         assertEquals(10, line.getBackorderQty());
-        verify(inventoryRepository, times(1)).save(any());
+        verify(inventoryRepository).save(any());
     }
 
     @Test
-    void testReserveOrder_ShouldAllowPartialReservation_WhenStockAvailableButNotEnough() {
+    void shouldAllowPartialReservation_whenStockAvailableButNotEnough() {
         // given
         inventory.setQtyOnHand(5);
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
@@ -114,8 +120,7 @@ class OrderReserveServiceTest {
                 .thenReturn(Optional.of(order));
         when(inventoryRepository.findByProductIdAndWarehouseId(product.getId(), warehouse.getId()))
                 .thenReturn(Optional.of(inventory));
-        when(orderReserveMapper.toDto(any(SalesOrder.class)))
-                .thenReturn(null);
+        when(orderReserveMapper.toDto(any())).thenReturn(null);
 
         // when
         orderReserveService.reserveOrder(dto);
@@ -124,11 +129,11 @@ class OrderReserveServiceTest {
         assertEquals(Status.PARTIAL_RESERVED, order.getStatus());
         assertEquals(5, inventory.getQtyReserved());
         assertEquals(5, line.getBackorderQty());
-        verify(inventoryRepository, times(1)).save(any());
+        verify(inventoryRepository).save(any());
     }
 
     @Test
-    void testReserveOrder_ShouldReserveCompletely_WhenStockSufficient() {
+    void shouldReserveCompletely_whenStockIsSufficient() {
         // given
         inventory.setQtyOnHand(15);
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
@@ -139,8 +144,7 @@ class OrderReserveServiceTest {
                 .thenReturn(Optional.of(order));
         when(inventoryRepository.findByProductIdAndWarehouseId(product.getId(), warehouse.getId()))
                 .thenReturn(Optional.of(inventory));
-        when(orderReserveMapper.toDto(any(SalesOrder.class)))
-                .thenReturn(null);
+        when(orderReserveMapper.toDto(any())).thenReturn(null);
 
         // when
         orderReserveService.reserveOrder(dto);
@@ -149,42 +153,42 @@ class OrderReserveServiceTest {
         assertEquals(Status.RESERVED, order.getStatus());
         assertEquals(10, inventory.getQtyReserved());
         assertEquals(0, line.getBackorderQty());
-        verify(inventoryRepository, times(1)).save(any());
+        verify(inventoryRepository).save(any());
     }
 
     @Test
-    void testReserveOrder_ShouldThrowException_WhenOrderNotFound() {
+    void shouldThrow_whenOrderNotFound() {
         // given
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
                 .orderId(999L)
                 .build();
-        when(salesOrderRepository.findById(999L))
-                .thenReturn(Optional.empty());
+        when(salesOrderRepository.findById(999L)).thenReturn(Optional.empty());
 
         // when + then
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
                 () -> orderReserveService.reserveOrder(dto));
         assertTrue(ex.getMessage().contains("Commande non trouvée"));
     }
 
     @Test
-    void testReserveOrder_ShouldThrowException_WhenOrderNotCreated() {
+    void shouldThrow_whenOrderNotCreated() {
         // given
         order.setStatus(Status.RESERVED);
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
                 .orderId(order.getId())
                 .build();
+
         when(salesOrderRepository.findById(order.getId()))
                 .thenReturn(Optional.of(order));
 
         // when + then
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> orderReserveService.reserveOrder(dto));
-        assertTrue(ex.getMessage().contains("Commande non trouvée"));
+        assertTrue(ex.getMessage().contains("Impossible de réserver"));
     }
 
     @Test
-    void testReserveOrder_ShouldThrowException_WhenInventoryNotFound() {
+    void shouldThrow_whenInventoryNotFound() {
         // given
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
                 .orderId(order.getId())
@@ -195,7 +199,7 @@ class OrderReserveServiceTest {
                 .thenReturn(Optional.empty());
 
         // when + then
-        RuntimeException ex = assertThrows(RuntimeException.class,
+        ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
                 () -> orderReserveService.reserveOrder(dto));
         assertTrue(ex.getMessage().contains("Inventaire non trouvé"));
     }
