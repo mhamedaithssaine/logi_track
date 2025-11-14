@@ -4,6 +4,7 @@ pipeline {
         tools {
             maven 'maven-3.8.5'
             jdk 'jdk-17'
+            sonarQubeScanner 'sonar-scanner'
         }
 
         environment {
@@ -34,13 +35,13 @@ pipeline {
                 }
             }
 
-         stage('SonarQube Analysis') {
-                     steps {
-                         withSonarQubeEnv('sonarqube') {
-                             sh 'mvn sonar:sonar -Dsonar.projectKey=logistics -Dsonar.projectName="logistics"'
-                         }
-                     }
-                 }
+        stage('SonarQube Analysis') {
+                   steps {
+                       withSonarQubeEnv('sonarqube') {
+                           sh 'mvn sonar:sonar -Dsonar.projectKey=logistics -Dsonar.projectName="logistics"'
+                       }
+                   }
+               }
 
 
             stage('Package') {
