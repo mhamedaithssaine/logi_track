@@ -22,7 +22,7 @@ pipeline {
 
             stage('Unit Tests') {
                 steps {
-                    sh 'mvn test -Dtest=!TestSuiteRunner,!LogisticsApplicationTests'
+                    sh 'mvn test '
 
                 }
                 post {
