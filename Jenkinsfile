@@ -6,6 +6,9 @@ pipeline {
             jdk 'jdk-17'
         }
 
+        environment {
+            SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
+        }
         stages {
             stage('Checkout') {
                 steps {
@@ -30,6 +33,15 @@ pipeline {
                     }
                 }
             }
+
+         stage('SonarQube Analysis') {
+                     steps {
+                         withSonarQubeEnv('sonarqube') {
+                             sh 'mvn sonar:sonar -Dsonar.projectKey=logistics -Dsonar.projectName="logistics"'
+                         }
+                     }
+                 }
+
 
             stage('Package') {
                 steps {
