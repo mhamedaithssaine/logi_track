@@ -4,12 +4,9 @@ pipeline {
         tools {
             maven 'maven-3.8.5'
             jdk 'jdk-17'
-            sonarQubeScanner 'sonar-scanner'
         }
 
-        environment {
-            SONAR_SCANNER_HOME = tool 'SonarQubeScanner'
-        }
+
         stages {
             stage('Checkout') {
                 steps {
@@ -41,8 +38,8 @@ pipeline {
                    withSonarQubeEnv('sonarqube') {
                        sh '''
                            mvn sonar:sonar \
-                           -Dsonar.projectKey=logi-track \
-                           -Dsonar.projectName="Logi Track" \
+                           -Dsonar.projectKey=logistics \
+                           -Dsonar.projectName="logistics" \
                            -Dsonar.host.url=http://sonarqube:9000
                        '''
                    }
