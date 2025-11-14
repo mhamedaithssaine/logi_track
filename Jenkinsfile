@@ -35,13 +35,20 @@ pipeline {
                 }
             }
 
-        stage('SonarQube Analysis') {
-                   steps {
-                       withSonarQubeEnv('sonarqube') {
-                           sh 'mvn sonar:sonar -Dsonar.projectKey=logistics -Dsonar.projectName="logistics"'
-                       }
+       stage('SonarQube Analysis') {
+           steps {
+               script {
+                   withSonarQubeEnv('sonarqube') {
+                       sh '''
+                           mvn sonar:sonar \
+                           -Dsonar.projectKey=logi-track \
+                           -Dsonar.projectName="Logi Track" \
+                           -Dsonar.host.url=http://sonarqube:9000
+                       '''
                    }
                }
+           }
+       }
 
 
             stage('Package') {
