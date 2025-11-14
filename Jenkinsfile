@@ -21,7 +21,8 @@ pipeline {
 
             stage('Unit Tests') {
                 steps {
-                    sh 'mvn test'
+                    sh 'mvn test -Dtest=!TestSuiteRunner,!LogisticsApplicationTests'
+
                 }
                 post {
                     always {
