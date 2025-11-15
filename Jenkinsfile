@@ -14,15 +14,11 @@ pipeline {
                 }
             }
 
-            stage('Build') {
-                steps {
-                    sh 'mvn clean compile'
-                }
-            }
+            stage('Build & test') {
 
-            stage('Unit Tests') {
                 steps {
-                    sh 'mvn test '
+
+                     sh 'mvn clean verify'
 
                 }
                 post {
@@ -40,6 +36,7 @@ pipeline {
                            mvn sonar:sonar \
                            -Dsonar.projectKey=logistics \
                            -Dsonar.projectName="logistics" \
+                           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
                            -Dsonar.host.url=http://sonarqube:9000
                        '''
                    }
