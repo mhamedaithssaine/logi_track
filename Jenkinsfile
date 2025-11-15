@@ -34,10 +34,12 @@ pipeline {
                    withSonarQubeEnv('sonarqube') {
                        sh '''
                            mvn sonar:sonar \
-                           -Dsonar.projectKey=logistics \
-                           -Dsonar.projectName="logistics" \
-                           -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
-                           -Dsonar.host.url=http://sonarqube:9000
+                            -Dsonar.projectKey=logistics \
+                            -Dsonar.projectName="logistics" \
+                            -Dsonar.java.coveragePlugin=jacoco \
+                            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
+                            -Dsonar.junit.reportPaths=target/surefire-reports \
+                            -Dsonar.host.url=http://sonarqube:9000
                        '''
                    }
                }
