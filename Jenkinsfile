@@ -39,7 +39,7 @@ pipeline {
                             -Dsonar.java.coveragePlugin=jacoco \
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
                             -Dsonar.junit.reportPaths=target/surefire-reports \
-                            -Dsonar.host.url=http://sonarqube:9000
+                            -Dsonar.host.url=http://sonarqube:9000/dashboard?id=logistics
                        '''
                    }
                }
