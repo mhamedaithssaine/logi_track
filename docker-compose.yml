@@ -12,9 +12,10 @@ services:
     environment:
       - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
     volumes:
-      - jenkins_Data:/var/jenkins_Data
+      - jenkins_Data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - ./src:/var/jenkins_Data/workspace/src
+      - shared_workspace:/var/jenkins_home/workspace
     networks:
       - jenkins-net
 
@@ -29,11 +30,13 @@ services:
       - sonarqube_data:/opt/sonarqube/data
       - sonarqube_extensions:/opt/sonarqube/extensions
       - sonarqube_logs:/opt/sonarqube/logs
+      - shared_workspace:/workspace:ro
     networks:
       - jenkins-net
 
 volumes:
   jenkins_Data:
+  shared_workspace:
   sonarqube_data:
   sonarqube_extensions:
   sonarqube_logs:

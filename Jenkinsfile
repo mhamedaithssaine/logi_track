@@ -3,7 +3,7 @@ pipeline {
 
         tools {
             maven 'maven-3.8.5'
-            jdk 'jdk-17'
+            s 'jdk-17'
         }
 
 
@@ -39,7 +39,7 @@ pipeline {
                             -Dsonar.java.coveragePlugin=jacoco \
                             -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml \
                             -Dsonar.junit.reportPaths=target/surefire-reports \
-                            -Dsonar.host.url=http://sonarqube:9000/dashboard?id=logistics
+                            -Dsonar.host.url=http://sonarqube:9000
                        '''
                    }
                }
