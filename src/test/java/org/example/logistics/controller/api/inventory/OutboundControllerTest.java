@@ -6,6 +6,9 @@ import org.example.logistics.service.OutboundService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -13,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -52,13 +56,10 @@ class OutboundControllerTest {
     @Test
     @DisplayName("Should record outbound successfully")
     void testRecordOutbound_Success() {
-        // Given
         when(outboundService.recordOutbound(any(OutboundCreateDto.class))).thenReturn(responseDto);
 
-        // When
         ResponseEntity<OutboundResponseDto> response = outboundController.recordOutbound(createDto);
 
-        // Then
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertNotNull(response.getBody());
@@ -73,26 +74,24 @@ class OutboundControllerTest {
     @Test
     @DisplayName("Should record outbound with reference document")
     void testRecordOutbound_WithReferenceDoc() {
-        // Given
         createDto.setReferenceDoc("SO-2025-999");
         when(outboundService.recordOutbound(any(OutboundCreateDto.class))).thenReturn(responseDto);
 
-        // When
         ResponseEntity<OutboundResponseDto> response = outboundController.recordOutbound(createDto);
 
-        // Then
         assertNotNull(response);
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
         verify(outboundService, times(1)).recordOutbound(any(OutboundCreateDto.class));
     }
 
-    @Test
-    @DisplayName("Should throw exception when product not found")
-    void testRecordOutbound_ProductNotFound() {
+    @ParameterizedTest
+    @DisplayName("Should throw exception for various error scenarios")
+    @MethodSource("provideErrorScenarios")
+    void testRecordOutbound_ErrorScenarios(String errorMessage) {
         // Given
         when(outboundService.recordOutbound(any(OutboundCreateDto.class)))
-                .thenThrow(new RuntimeException("Produit introuvable"));
+                .thenThrow(new RuntimeException(errorMessage));
 
         // When & Then
         assertThrows(RuntimeException.class, () -> {
@@ -102,45 +101,20 @@ class OutboundControllerTest {
         verify(outboundService, times(1)).recordOutbound(any(OutboundCreateDto.class));
     }
 
-    @Test
-    @DisplayName("Should throw exception when warehouse not found")
-    void testRecordOutbound_WarehouseNotFound() {
-        // Given
-        when(outboundService.recordOutbound(any(OutboundCreateDto.class)))
-                .thenThrow(new RuntimeException("Entrepôt introuvable"));
-
-        // When & Then
-        assertThrows(RuntimeException.class, () -> {
-            outboundController.recordOutbound(createDto);
-        });
-
-        verify(outboundService, times(1)).recordOutbound(any(OutboundCreateDto.class));
-    }
-
-    @Test
-    @DisplayName("Should throw exception when insufficient stock")
-    void testRecordOutbound_InsufficientStock() {
-        // Given
-        createDto.setQuantity(1000);
-        when(outboundService.recordOutbound(any(OutboundCreateDto.class)))
-                .thenThrow(new RuntimeException("Stock insuffisant"));
-
-        // When & Then
-        assertThrows(RuntimeException.class, () -> {
-            outboundController.recordOutbound(createDto);
-        });
-
-        verify(outboundService, times(1)).recordOutbound(any(OutboundCreateDto.class));
+    private static Stream<Arguments> provideErrorScenarios() {
+        return Stream.of(
+                Arguments.of("Produit introuvable"),
+                Arguments.of("Entrepôt introuvable"),
+                Arguments.of("Stock insuffisant")
+        );
     }
 
     @Test
     @DisplayName("Should throw exception when inventory not found")
     void testRecordOutbound_InventoryNotFound() {
-        // Given
         when(outboundService.recordOutbound(any(OutboundCreateDto.class)))
                 .thenThrow(new RuntimeException("Inventaire introuvable"));
 
-        // When & Then
         assertThrows(RuntimeException.class, () -> {
             outboundController.recordOutbound(createDto);
         });
@@ -151,17 +125,14 @@ class OutboundControllerTest {
     @Test
     @DisplayName("Should handle outbound that depletes stock")
     void testRecordOutbound_DepleteStock() {
-        // Given
         createDto.setQuantity(100);
         responseDto.setQuantitySubtracted(100);
         responseDto.setNewQtyOnHand(0);
         responseDto.setMessage("Stock épuisé");
         when(outboundService.recordOutbound(any(OutboundCreateDto.class))).thenReturn(responseDto);
 
-        // When
         ResponseEntity<OutboundResponseDto> response = outboundController.recordOutbound(createDto);
 
-        // Then
         assertNotNull(response);
         assertEquals(0, response.getBody().getNewQtyOnHand());
 
@@ -171,14 +142,11 @@ class OutboundControllerTest {
     @Test
     @DisplayName("Should handle multiple outbound operations")
     void testRecordOutbound_MultipleOperations() {
-        // Given
         when(outboundService.recordOutbound(any(OutboundCreateDto.class))).thenReturn(responseDto);
 
-        // When
         ResponseEntity<OutboundResponseDto> response1 = outboundController.recordOutbound(createDto);
         ResponseEntity<OutboundResponseDto> response2 = outboundController.recordOutbound(createDto);
 
-        // Then
         assertNotNull(response1);
         assertNotNull(response2);
 
@@ -188,16 +156,13 @@ class OutboundControllerTest {
     @Test
     @DisplayName("Should validate minimum quantity")
     void testRecordOutbound_MinimumQuantity() {
-        // Given
         createDto.setQuantity(1);
         responseDto.setQuantitySubtracted(1);
         responseDto.setNewQtyOnHand(99);
         when(outboundService.recordOutbound(any(OutboundCreateDto.class))).thenReturn(responseDto);
 
-        // When
         ResponseEntity<OutboundResponseDto> response = outboundController.recordOutbound(createDto);
 
-        // Then
         assertNotNull(response);
         assertEquals(1, response.getBody().getQuantitySubtracted());
 
