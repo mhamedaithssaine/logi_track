@@ -82,12 +82,12 @@ public class ProductService {
 
         Product product = opt.get();
         if (product.getName() == null || product.getCategory() == null || product.getPrice() == null) {
-            System.out.println("Produit trouvé mais fields null : " + sku + " - Name: " + product.getName() + ", Category: " + product.getCategory() + ", Price: " + product.getPrice());  // Debug : Print fields
+            System.out.println("Produit trouvé mais fields null : " + sku + " - Name: " + product.getName() + ", Category: " + product.getCategory() + ", Price: " + product.getPrice());
             throw new RuntimeException("Produit incomplet : champs null");
         }
 
         ProductResponseDto dto = productMapper.toDto(product);
-        boolean available = Boolean.TRUE.equals(product.getActive());  // Safe : active not null
+        boolean available = Boolean.TRUE.equals(product.getActive());
 
         return dto;
     }

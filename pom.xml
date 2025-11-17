@@ -22,6 +22,8 @@
         <java.version>17</java.version>
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <lombok.version>1.18.42</lombok.version>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
     </properties>
 
     <dependencies>
@@ -50,14 +52,12 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!--  mapStruct-->
-
+        <!-- MapStruct -->
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>1.5.5.Final</version>
         </dependency>
-
         <dependency>
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct-processor</artifactId>
@@ -69,7 +69,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version> <!-- or latest version -->
+            <version>1.18.30</version>
             <scope>provided</scope>
         </dependency>
 
@@ -87,6 +87,12 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- JUnit Parameterized Tests -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
         <!-- Mockito Core -->
@@ -107,7 +113,6 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -131,7 +136,6 @@
                             <artifactId>mapstruct-processor</artifactId>
                             <version>${mapstruct.version}</version>
                         </path>
-                        <!-- Ajoutez cette combinaison Lombok + MapStruct -->
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok-mapstruct-binding</artifactId>
@@ -141,7 +145,7 @@
                 </configuration>
             </plugin>
 
-            <!-- JaCoCo plugin -->
+            <!-- JaCoCo plugin - Configuration optimale -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -174,7 +178,12 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>0.00</minimum>
+                                            <minimum>0.25</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.15</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
@@ -183,14 +192,31 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <!-- ✅ Exclure uniquement ce qui ne doit pas être testé -->
                     <excludes>
-                        <exclude>**/dto/**</exclude>
-                        <exclude>**/entity/**</exclude>
-                        <exclude>**/config/**</exclude>
+                        <!-- DTOs (pas de logique) -->
+                        <exclude>**/dto/**/*</exclude>
+
+                        <!-- Entities (pas de logique métier) -->
+                        <exclude>**/entity/**/*</exclude>
+
+                        <!-- Mappers générés par MapStruct -->
+                        <exclude>**/mapper/**/*Impl.class</exclude>
+
+                        <!-- Configuration Spring -->
+                        <exclude>**/config/**/*</exclude>
+
+                        <!-- Repositories (interfaces JPA) -->
+                        <exclude>**/repository/**/*</exclude>
+
+                        <!-- Application main -->
+                        <exclude>**/LogisticsApplication.class</exclude>
+
+                        <!-- Enums (pas de logique) -->
+                        <exclude>**/entity/Enum/**/*</exclude>
                     </excludes>
                 </configuration>
             </plugin>
-
 
             <!-- Surefire pour les tests -->
             <plugin>
@@ -204,18 +230,19 @@
                     </includes>
                 </configuration>
             </plugin>
+
             <!-- SonarQube -->
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>3.10.0.2594</version>
             </plugin>
+
             <!-- Spring Boot plugin -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
         </plugins>
     </build>
 </project>
