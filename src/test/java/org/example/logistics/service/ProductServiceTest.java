@@ -3,7 +3,6 @@ package org.example.logistics.service;
 import org.example.logistics.dto.product.ProductCreateDto;
 import org.example.logistics.dto.product.ProductResponseDto;
 import org.example.logistics.dto.product.ProductUpdateDto;
-import org.example.logistics.entity.Enum.Status;
 import org.example.logistics.entity.Product;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.ProductMapper;
