@@ -191,7 +191,7 @@
                         </configuration>
                     </execution>
                 </executions>
-                <configuration>
+                <configuration>     
                     <!-- ✅ Exclure uniquement ce qui ne doit pas être testé -->
                     <excludes>
                         <!-- DTOs (pas de logique) -->
