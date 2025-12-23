@@ -17,33 +17,33 @@ public class WarehouseController {
     @Autowired
     private WarehouseService warehouseService;
 
-    @GetMapping  // GET /api/warehouses (all)
+    @GetMapping
     public ResponseEntity<List<WarehouseResponseDto>> getAllWarehouses() {
         List<WarehouseResponseDto> warehouses = warehouseService.getAllWarehouses();
         return ResponseEntity.ok(warehouses);
     }
 
 
-    @GetMapping("/{code}")  // GET /api/warehouses/{code}
+    @GetMapping("/{code}")
     public ResponseEntity<WarehouseResponseDto> getWarehouseByCode(@PathVariable String code) {
         WarehouseResponseDto warehouse = warehouseService.getWarehouseByCode(code);
         return ResponseEntity.ok(warehouse);
     }
 
 
-    @PostMapping  // POST /api/warehouses (create)
+    @PostMapping
     public ResponseEntity<WarehouseResponseDto> createWarehouse(@Valid @RequestBody WarehouseCreateDto dto) {
         WarehouseResponseDto warehouse = warehouseService.createWarehouse(dto);
         return ResponseEntity.ok(warehouse);
     }
 
-    @PutMapping("/{code}")  // PUT /api/warehouses/{code} (update)
+    @PutMapping("/{code}")
     public ResponseEntity<WarehouseResponseDto> updateWarehouse(@PathVariable String code, @Valid @RequestBody WarehouseUpdateDto dto) {
         WarehouseResponseDto warehouse = warehouseService.updateWarehouse(code, dto);
         return ResponseEntity.ok(warehouse);
     }
 
-    @DeleteMapping("/{code}")  // DELETE /api/warehouses/{code}
+    @DeleteMapping("/{code}")
     public ResponseEntity<String> deleteWarehouse(@PathVariable String code) {
         String message = warehouseService.deleteWarehouse(code);
         return ResponseEntity.ok(message);

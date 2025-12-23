@@ -51,7 +51,7 @@ public class WarehouseManagerController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id}/delete")
     public ResponseEntity<WarehouseManagerResponseDto> delete(@PathVariable Long id) {
         WarehouseManagerResponseDto response = warehouseManagerService.delete(id);
         return ResponseEntity.ok(response);
