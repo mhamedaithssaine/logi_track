@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Optional;
+import java.util.List;
 
 @Service
 public class RefreshTokenService {
@@ -35,28 +35,33 @@ public class RefreshTokenService {
 
     @Transactional
     public RefreshToken createRefreshToken(String userEmail) {
+
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new BusinessException("Utilisateur non trouvé"));
 
-        Optional<RefreshToken> existingToken = refreshTokenRepository.findByUser(user);
-        if (existingToken.isPresent()) {
-            RefreshToken oldToken = existingToken.get();
-            oldToken.setRevoked(true);
-            refreshTokenRepository.save(oldToken);
-        }
+        List<RefreshToken> activeTokens =
+                refreshTokenRepository.findAllByUserAndRevokedFalse(user);
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+        activeTokens.forEach(t -> t.setRevoked(true));
+        refreshTokenRepository.saveAll(activeTokens);
+
+        UserDetails userDetails =
+                userDetailsService.loadUserByUsername(userEmail);
+
         String tokenValue = jwtService.generateRefreshToken(userDetails);
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .user(user)
                 .token(tokenValue)
-                .expiryDate(Instant.now().plusMillis(jwtProperties.getRefreshTokenExpiration()))
+                .expiryDate(
+                        Instant.now().plusMillis(jwtProperties.getRefreshTokenExpiration())
+                )
                 .revoked(false)
                 .build();
 
         return refreshTokenRepository.save(refreshToken);
     }
+
 
     @Transactional
     public RefreshToken verifyRefreshToken(String token) {
@@ -82,8 +87,11 @@ public class RefreshTokenService {
     public void revokeRefreshToken(String token) {
         RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
                 .orElseThrow(() -> new BusinessException("Refresh token non trouvé"));
-        refreshToken.setRevoked(true);
-        refreshTokenRepository.save(refreshToken);
+        if (refreshToken.getExpiryDate().isBefore(Instant.now())) {
+            refreshToken.setRevoked(true);
+            refreshTokenRepository.save(refreshToken);
+            throw new BusinessException("Refresh token expiré");
+        }
     }
 
 }

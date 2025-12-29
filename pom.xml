@@ -132,6 +132,13 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+
+        <!--logstach -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -211,7 +218,6 @@
                     </execution>
                 </executions>
                 <configuration>     
-                    <!-- ✅ Exclure uniquement ce qui ne doit pas être testé -->
                     <excludes>
                         <!-- DTOs (pas de logique) -->
                         <exclude>**/dto/**/*</exclude>
