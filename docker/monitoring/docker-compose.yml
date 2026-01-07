@@ -19,7 +19,7 @@ services:
     networks:
       - my-network
   kibana:
-    image: docker.elastic.co/kibana/kibana:7.1m
+    image: docker.elastic.co/kibana/kibana:7.17.22
     container_name: kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
