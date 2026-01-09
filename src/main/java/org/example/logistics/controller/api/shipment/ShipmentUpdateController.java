@@ -16,7 +16,6 @@ public class ShipmentUpdateController {
         this.shipmentUpdateService = shipmentUpdateService;
     }
 
-    // déclenche l'expédition (ship) par orderId
     @PostMapping("/{id}/ship")
     public ResponseEntity<ShipmentFullResponseDto> shipOrder(@PathVariable Long id) {
         ShipmentUpdateDto dto = ShipmentUpdateDto.builder().orderId(id).build();
@@ -24,7 +23,6 @@ public class ShipmentUpdateController {
         return ResponseEntity.ok(resp);
     }
 
-    // confirmer livraison par shipment id
     @PostMapping("/shipments/{id}/deliver")
     public ResponseEntity<ShipmentFullResponseDto> deliver(@PathVariable Long id) {
         ShipmentUpdateDto dto = ShipmentUpdateDto.builder().shipmentId(id).build();

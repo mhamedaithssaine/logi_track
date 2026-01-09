@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    container_name: logistics
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Mhamed@1
+      POSTGRES_DB: smart_shop
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5431:5432"
+    networks:
+      - smart-shop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smart_shop"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # pgAdmin
+  pgadmin:
+    container_name: logistics-admin
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: mhamedaithssaine1@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: Mhamed@1
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "8082:80"
+    networks:
+      - smart-shop-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+# Réseaux
+networks:
+  smart-shop-network:
+    driver: bridge
+
+# Volumes persistants
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local

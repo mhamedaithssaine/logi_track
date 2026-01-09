@@ -86,8 +86,44 @@ public class GlobalExceptionHandler {
 
         return buildErrorResponse(
                 HttpStatus.UNAUTHORIZED,
-                "Non autorisé",
+                "Non authentifié",
                 ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbiddenException(
+            ForbiddenException ex, WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "Accès interdit",
+                ex.getMessage(),
+                request
+        );
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                "Accès interdit",
+                "Vous n'avez pas les permissions nécessaires pour accéder à cette ressource",
+                request
+        );
+    }
+
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException ex, WebRequest request) {
+
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                "Non authentifié",
+                "Token invalide ou expiré",
                 request
         );
     }
