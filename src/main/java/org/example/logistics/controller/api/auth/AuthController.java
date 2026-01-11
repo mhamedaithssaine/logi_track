@@ -20,21 +20,42 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+
+        log.info("AUTH_LOGIN_ATTEMPT email={} endpoint=/api/auth/login",
+                request.getEmail());
+
         AuthResponse response = authService.login(request);
+
+        log.info("AUTH_LOGIN_SUCCESS userId={} role={} endpoint=/api/auth/login",
+                response.getUserId(),
+                response.getRole());
+
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+
+        log.info("AUTH_REFRESH_ATTEMPT endpoint=/api/auth/refresh");
+
         AuthResponse response = authService.refreshToken(request);
+
+        log.info("AUTH_REFRESH_SUCCESS userId={} role={} endpoint=/api/auth/refresh",
+                response.getUserId(),
+                response.getRole());
+
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@Valid @RequestBody RefreshTokenRequest request) {
-        log.info("gggggggggggggggggggggggggggggggg");
+
+        log.info("AUTH_LOGOUT_ATTEMPT endpoint=/api/auth/logout");
+
         authService.logout(request);
-        log.info("sssssshssssssssssssssssssssssssssssssssssssssssssss");
+
+        log.info("AUTH_LOGOUT_SUCCESS endpoint=/api/auth/logout");
+
         return ResponseEntity.ok().body("Déconnexion réussie");
     }
 }
