@@ -1,5 +1,6 @@
 package org.example.logistics.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.example.logistics.dto.order.SalesOrderReserveDto;
 import org.example.logistics.dto.order.SalesOrderReserveResponseDto;
 import org.example.logistics.entity.Enum.Status;
@@ -14,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
+@Slf4j
 @Service
 public class OrderReserveService {
     @Autowired
@@ -27,8 +28,12 @@ public class OrderReserveService {
     private OrderReserveMapper orderReserveMapper;
 
     public SalesOrderReserveResponseDto reserveOrder(SalesOrderReserveDto dto) {
+        log.info("ORDER_RESERVE_START orderId={}", dto.getOrderId());
+
 
         if (dto == null || dto.getOrderId() == null) {
+            log.warn("ORDER_RESERVE_FAILED orderId={} reason=ORDER_NOT_FOUND",
+                    dto.getOrderId());
             throw new IllegalArgumentException("orderId manquant");
         }
 
@@ -41,7 +46,9 @@ public class OrderReserveService {
         System.out.println("Commande trouvée : ID=" + order.getId() + ", Status=" + order.getStatus());
 
         if (order.getStatus() != Status.CREATED) {
-            System.out.println("Status non CREATED : " + order.getStatus());
+            log.warn("ORDER_RESERVE_FAILED orderId={} status={} reason=INVALID_STATUS",
+                    order.getId(),
+                    order.getStatus());
             throw new IllegalStateException("Impossible de réserver : " + order.getId());
         }
 
@@ -53,7 +60,11 @@ public class OrderReserveService {
             Optional<Inventory> optInv = inventoryRepository.findByProductIdAndWarehouseId(
                     line.getProduct().getId(), order.getWarehouse().getId());
             if (optInv.isEmpty()) {
-                System.out.println("Inventory non trouvé pour product " + line.getProduct().getSku() + ", warehouse " + order.getWarehouse().getId());
+
+                log.error("ORDER_RESERVE_FAILED orderId={} productSku={} warehouseId={} reason=INVENTORY_NOT_FOUND",
+                        order.getId(),
+                        line.getProduct().getSku(),
+                        order.getWarehouse().getId());
                 throw ResourceNotFoundException.withString("Inventaire non trouvé pour produit " , "sku" , line.getProduct().getSku());
             }
 
@@ -63,23 +74,45 @@ public class OrderReserveService {
                 line.setBackorderQty(line.getQuantity());
                 partial = true;
                 message = "Aucun stock disponible pour " + line.getProduct().getSku();
-                System.out.println("Aucun stock dispo pour " + line.getProduct().getSku());
+
+                log.warn("ORDER_RESERVE_NO_STOCK orderId={} productSku={} requestedQty={}",
+                        order.getId(),
+                        line.getProduct().getSku(),
+                        line.getQuantity());
             }
             if (available < line.getQuantity()) {
                 line.setBackorderQty(line.getQuantity() - available);
                 inv.setQtyReserved(inv.getQtyReserved() + available);
                 partial = true;
                 message = "Réservation partielle : Backorder pour " + line.getBackorderQty() + " unités " + line.getProduct().getSku();
+                log.info("ORDER_RESERVE_PARTIAL orderId={} productSku={} reserved={} backorder={}",
+                        order.getId(),
+                        line.getProduct().getSku(),
+                        available,
+                        line.getBackorderQty());
+
             } else {
                 line.setBackorderQty(0);
                 inv.setQtyReserved(inv.getQtyReserved() + line.getQuantity());
+                log.info("ORDER_RESERVE_FULL orderId={} productSku={} qty={}",
+                        order.getId(),
+                        line.getProduct().getSku(),
+                        line.getQuantity());
+
             }
 
             inventoryRepository.save(inv);
             line.setSalesOrder(order);
+            log.info("INVENTORY_RESERVED productSku={} warehouseId={} reservedQty={} totalReserved={}",
+                    line.getProduct().getSku(),
+                    order.getWarehouse().getId(),
+                    line.getQuantity(),
+                    inv.getQtyReserved());
+
         }
 
         order.setStatus(partial ? Status.PARTIAL_RESERVED : Status.RESERVED);
+
         salesOrderRepository.save(order);
 
         return orderReserveMapper.toDto(order);

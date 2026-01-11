@@ -17,6 +17,6 @@ public class WarehouseManager extends User {
     private String phone;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "warehouse_id", nullable = false)
+    @JoinColumn(name = "warehouse_id", nullable = true)
     private Warehouse warehouse;
 }
