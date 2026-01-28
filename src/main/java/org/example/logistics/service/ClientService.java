@@ -1,6 +1,5 @@
 package org.example.logistics.service;
 
-import lombok.RequiredArgsConstructor;
 import org.example.logistics.dto.client.*;
 import org.example.logistics.entity.Client;
 import org.example.logistics.exception.ConflictException;
@@ -12,18 +11,41 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+import java.util.List;
+import java.util.stream.Collectors;
 
+@Service
 public class ClientService {
 
     @Autowired
-    private  ClientRepository clientRepository;
+    private ClientRepository clientRepository;
     @Autowired
-    private  ClientMapper clientMapper;
+    private ClientMapper clientMapper;
     @Autowired
-    private  PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
-    // Register/Create
+    @Transactional(readOnly = true)
+    public List<ClientResponseDto> getAll() {
+        return clientRepository.findAll().stream()
+                .map(clientMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ClientResponseDto create(ClientCreateDto dto) {
+        if (clientRepository.existsByEmail(dto.getEmail())) {
+            throw new ConflictException("Email déjà utilisé : " + dto.getEmail());
+        }
+        Client client = clientMapper.toEntityFromCreate(dto);
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            client.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        }
+        Client saved = clientRepository.save(client);
+        ClientResponseDto response = clientMapper.toDto(saved);
+        response.setMessage("Client créé avec succès");
+        return response;
+    }
+
     @Transactional
     public ClientResponseDto register(ClientRegisterDto dto) {
         if (clientRepository.existsByEmail(dto.getEmail())) {
@@ -72,15 +94,11 @@ public class ClientService {
     }
 
     @Transactional
-    public ClientResponseDto update(Long id, ClientRegisterDto dto) {
+    public ClientResponseDto update(Long id, ClientUpdateDto dto) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() ->  ResourceNotFoundException.withId("Client", id));
+                .orElseThrow(() -> ResourceNotFoundException.withId("Client", id));
 
-        // Update only allowed fields (do not change email here)
-        if (dto.getName() != null) client.setName(dto.getName());
-        if (dto.getPhone() != null) client.setPhone(dto.getPhone());
-        if (dto.getAddress() != null) client.setAddress(dto.getAddress());
-        // If password provided, encode and update
+        clientMapper.updateEntityFromDto(dto, client);
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             client.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         }
@@ -106,11 +124,30 @@ public class ClientService {
     @Transactional
     public ClientResponseDto deactivate(Long id) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() ->  ResourceNotFoundException.withId("Client", id));
+                .orElseThrow(() -> ResourceNotFoundException.withId("Client", id));
         client.setActive(false);
         Client saved = clientRepository.save(client);
         ClientResponseDto response = clientMapper.toDto(saved);
         response.setMessage("Client désactivé");
+        return response;
+    }
+
+    @Transactional
+    public ClientResponseDto activate(Long id) {
+        Client client = clientRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.withId("Client", id));
+        client.setActive(true);
+        Client saved = clientRepository.save(client);
+        ClientResponseDto response = ClientResponseDto.builder()
+                .id(saved.getId())
+                .name(saved.getName())
+                .email(saved.getEmail())
+                .phone(saved.getPhone())
+                .address(saved.getAddress())
+                .role(saved.getRole() != null ? saved.getRole().name() : "CLIENT")
+                .active(Boolean.TRUE.equals(saved.getActive()))
+                .message("Client activé")
+                .build();
         return response;
     }
 }

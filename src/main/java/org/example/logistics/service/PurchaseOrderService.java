@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
 
 @Service
 @Transactional
-public class PurchaseOrderService {
+public class
+PurchaseOrderService {
 
     @Autowired
     private PurchaseOrderRepository purchaseOrderRepository;
@@ -47,7 +48,6 @@ public class PurchaseOrderService {
     @Autowired
     private PurchaseOrderMapper purchaseOrderMapper;
 
-    // Create PO
     @Transactional
     public PurchaseOrderResponseDto createPurchaseOrder(PurchaseOrderCreateDto dto) {
         Supplier supplier = supplierRepository.findById(dto.getSupplierId())
@@ -79,7 +79,6 @@ public class PurchaseOrderService {
         return purchaseOrderMapper.toDto(saved);
     }
 
-    // Helper prive
     private List<PurchaseOrderLine> createLines(PurchaseOrder po, List<PurchaseOrderCreateDto.LineCreateDto> lineDtos) {
         return lineDtos.stream()
                 .map(lineDto -> {
@@ -100,7 +99,6 @@ public class PurchaseOrderService {
                 .collect(Collectors.toList());
     }
 
-    // Receive PO
     @Transactional
     public PurchaseOrderResponseDto receivePurchaseOrder(Long poId, PurchaseOrderReceiveDto dto) {
         Optional<PurchaseOrder> optPo = purchaseOrderRepository.findByIdAndStatus(poId, Status.APPROVED);
@@ -110,16 +108,13 @@ public class PurchaseOrderService {
 
         PurchaseOrder po = optPo.get();
 
-        //  Update lines with receivedQty
         for (int i = 0; i < po.getLines().size(); i++) {
             PurchaseOrderLine line = po.getLines().get(i);
             PurchaseOrderReceiveDto.LineReceiveDto receivedLine = dto.getLines().get(i);
 
-            // Update line receivedQty
             line.setReceivedQty(receivedLine.getReceivedQuantity());
             purchaseOrderLineRepository.save(line);
 
-            // Update inventory + INBOUND movement
             receiveLineAndUpdateStock(line, po.getSupplier(), receivedLine.getReceivedQuantity());
         }
 
@@ -129,7 +124,7 @@ public class PurchaseOrderService {
         return purchaseOrderMapper.toDto(saved);
     }
 
-    // Helper prive : Update stock + INBOUND movement pour 1 line
+   
     private void receiveLineAndUpdateStock(PurchaseOrderLine line, Supplier supplier, Integer receivedQuantity) {
         if (receivedQuantity > 0) {
             if (supplier.getWarehouse() == null) {

@@ -2,6 +2,7 @@ package org.example.logistics.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -167,6 +168,21 @@ public class GlobalExceptionHandler {
     }
 
 
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotWritable(
+            HttpMessageNotWritableException ex, WebRequest request) {
+
+        ex.printStackTrace();
+        String detail = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+
+        return buildErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Erreur de sérialisation",
+                "Impossible de sérialiser la réponse. " + (detail != null ? detail : ""),
+                request
+        );
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleRuntimeException(
             RuntimeException ex, WebRequest request) {
@@ -187,11 +203,12 @@ public class GlobalExceptionHandler {
             Exception ex, WebRequest request) {
 
         ex.printStackTrace();
+        String detail = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getName();
 
         return buildErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Erreur inattendue",
-                "Une erreur inattendue s'est produite. Veuillez réessayer plus tard.",
+                "Une erreur inattendue s'est produite. Veuillez réessayer plus tard. Détail: " + detail,
                 request
         );
     }

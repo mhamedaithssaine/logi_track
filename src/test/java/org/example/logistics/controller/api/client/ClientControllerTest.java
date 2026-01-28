@@ -3,6 +3,7 @@ package org.example.logistics.controller.api.client;
 import org.example.logistics.dto.client.ClientLoginDto;
 import org.example.logistics.dto.client.ClientRegisterDto;
 import org.example.logistics.dto.client.ClientResponseDto;
+import org.example.logistics.dto.client.ClientUpdateDto;
 import org.example.logistics.service.ClientService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +13,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -27,6 +30,7 @@ class ClientControllerTest {
     private ClientController clientController;
 
     private ClientRegisterDto registerDto;
+    private ClientUpdateDto updateDto;
     private ClientLoginDto loginDto;
     private ClientResponseDto responseDto;
 
@@ -56,6 +60,13 @@ class ClientControllerTest {
                 .role("CLIENT")
                 .active(true)
                 .message("Opération réussie")
+                .build();
+
+        updateDto = ClientUpdateDto.builder()
+                .name("John Doe")
+                .email("john.doe@example.com")
+                .phone("0612345678")
+                .address("123 Main Street, Paris")
                 .build();
     }
 
@@ -155,13 +166,10 @@ class ClientControllerTest {
     @DisplayName("Should update client successfully")
     void testUpdate_Success() {
         // Given
-        ClientRegisterDto updateDto = ClientRegisterDto.builder()
-                .name("John Doe Updated")
-                .email("john.updated@example.com")
-                .password("NewPassword123")
-                .phone("0698765432")
-                .address("456 New Street")
-                .build();
+        updateDto.setName("John Doe Updated");
+        updateDto.setEmail("john.updated@example.com");
+        updateDto.setPhone("0698765432");
+        updateDto.setAddress("456 New Street");
 
         ClientResponseDto updatedResponse = ClientResponseDto.builder()
                 .id(1L)
@@ -174,7 +182,7 @@ class ClientControllerTest {
                 .message("Client mis à jour")
                 .build();
 
-        when(clientService.update(eq(1L), any(ClientRegisterDto.class))).thenReturn(updatedResponse);
+        when(clientService.update(eq(1L), any(ClientUpdateDto.class))).thenReturn(updatedResponse);
 
         // When
         ResponseEntity<ClientResponseDto> response = clientController.update(1L, updateDto);
@@ -186,7 +194,7 @@ class ClientControllerTest {
         assertEquals("John Doe Updated", response.getBody().getName());
         assertEquals("john.updated@example.com", response.getBody().getEmail());
 
-        verify(clientService, times(1)).update(eq(1L), any(ClientRegisterDto.class));
+        verify(clientService, times(1)).update(eq(1L), any(ClientUpdateDto.class));
     }
 
     @Test
@@ -272,15 +280,15 @@ class ClientControllerTest {
     @DisplayName("Should handle update with non-existent client")
     void testUpdate_NotFound() {
         // Given
-        when(clientService.update(eq(999L), any(ClientRegisterDto.class)))
+        when(clientService.update(eq(999L), any(ClientUpdateDto.class)))
                 .thenThrow(new RuntimeException("Client introuvable"));
 
         // When & Then
         assertThrows(RuntimeException.class, () -> {
-            clientController.update(999L, registerDto);
+            clientController.update(999L, updateDto);
         });
 
-        verify(clientService, times(1)).update(eq(999L), any(ClientRegisterDto.class));
+        verify(clientService, times(1)).update(eq(999L), any(ClientUpdateDto.class));
     }
 
     @Test
@@ -317,29 +325,32 @@ class ClientControllerTest {
     @DisplayName("Should verify all controller methods are called")
     void testControllerMethodsCalls() {
         // Given
+        when(clientService.getAll()).thenReturn(List.of(responseDto));
         when(clientService.register(any(ClientRegisterDto.class))).thenReturn(responseDto);
         when(clientService.login(any(ClientLoginDto.class))).thenReturn(responseDto);
         when(clientService.getById(anyLong())).thenReturn(responseDto);
         when(clientService.getByEmail(anyString())).thenReturn(responseDto);
-        when(clientService.update(anyLong(), any(ClientRegisterDto.class))).thenReturn(responseDto);
+        when(clientService.update(anyLong(), any(ClientUpdateDto.class))).thenReturn(responseDto);
         when(clientService.delete(anyLong())).thenReturn(responseDto);
         when(clientService.deactivate(anyLong())).thenReturn(responseDto);
 
         // When
+        clientController.getAll();
         clientController.register(registerDto);
         clientController.login(loginDto);
         clientController.getById(1L);
         clientController.getByEmail("john.doe@example.com");
-        clientController.update(1L, registerDto);
+        clientController.update(1L, updateDto);
         clientController.delete(1L);
         clientController.deactivate(1L);
 
         // Then
+        verify(clientService, times(1)).getAll();
         verify(clientService, times(1)).register(any(ClientRegisterDto.class));
         verify(clientService, times(1)).login(any(ClientLoginDto.class));
         verify(clientService, times(1)).getById(1L);
         verify(clientService, times(1)).getByEmail("john.doe@example.com");
-        verify(clientService, times(1)).update(anyLong(), any(ClientRegisterDto.class));
+        verify(clientService, times(1)).update(anyLong(), any(ClientUpdateDto.class));
         verify(clientService, times(1)).delete(1L);
         verify(clientService, times(1)).deactivate(1L);
     }

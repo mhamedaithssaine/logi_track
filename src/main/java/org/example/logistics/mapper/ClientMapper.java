@@ -22,6 +22,11 @@ public interface ClientMapper {
     @Mapping(target = "passwordHash", ignore = true)
     Client toEntity(ClientRegisterDto dto);
 
+    @Mapping(target = "role", constant = "CLIENT")
+    @Mapping(target = "active", constant = "true")
+    @Mapping(target = "passwordHash", ignore = true)
+    Client toEntityFromCreate(ClientCreateDto dto);
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "email", ignore = true)
     @Mapping(target = "role", ignore = true)
