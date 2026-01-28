@@ -1,170 +1,174 @@
-🔐 Spring Security – Sécurisation Initiale de l’API Logistique (Basic Auth)
+# 🔐 Spring Security – Sécurisation Initiale de l’API Logistique (Basic Auth)
 
 Ce document constitue la documentation officielle de la phase de sécurisation du projet logistique.
-Il définit les fondations de Spring Security moderne (Spring Boot 3 / Spring Security 6) et inclut :
 
-Théorie complète (authentification, authorization, CSRF, CORS…)
+Il définit les fondations de **Spring Security moderne (Spring Boot 3 / Spring Security 6)** et inclut :
 
-Architecture interne (Filters, Provider, Manager…)
+* Authentification & Autorisation
+* Architecture interne de Spring Security
+* Implémentation complète de Basic Authentication
+* Sécurisation des endpoints
+* Tests avec Postman et cURL
+* Bonnes pratiques de sécurité
 
-Explication de Basic Auth
+---
 
-Implémentation complète : SecurityFilterChain + BCrypt + InMemory Users
+## 📘 Sommaire
 
-Schémas de flux internes
+1. Introduction
+2. Authentification vs Autorisation
+3. Architecture Spring Security Moderne
+4. Security Filter Chain
+5. Basic Authentication – Théorie & Sécurité
+6. Configuration Spring Security (POC)
+7. Rôles et accès des endpoints
+8. Tests Postman / cURL
+9. Schémas internes
+10. Bonnes pratiques
 
-Documentation des endpoints sécurisés
+---
 
-Exemples de tests avec Postman / cURL
+## 🔰 Introduction
 
-📘 Sommaire
+Cette phase vise à mettre en place une première couche de sécurité pour l’API logistique en utilisant **Basic Authentication**.
 
-Introduction
+Technologies volontairement exclues :
 
-Authentification vs Autorisation
+* ❌ JWT
+* ❌ OAuth2
+* ❌ Sessions avancées
+* ❌ Docker
+* ❌ CI/CD
 
-Architecture Spring Security Moderne
+### Objectifs
 
-La Security Filter Chain — Explication des filtres
+* Comprendre Spring Security en profondeur
+* Construire un POC Basic Auth solide
+* Documenter clairement les mécanismes internes
 
-Basic Auth — Théorie & Sécurité
+---
 
-Configuration Spring Security (POC Basic Auth)
+## 🧩 Authentification vs Autorisation
 
-Rôles et accès des endpoints
+| Concept          | Définition                            |
+| ---------------- | ------------------------------------- |
+| Authentification | Vérifier qui est l’utilisateur        |
+| Autorisation     | Vérifier ce qu’il a le droit de faire |
 
-Tests avec Postman / cURL
+**Exemple :**
 
-Schémas internes Spring Security
+* "Tu es Ahmed" → Authentification
+* "Tu peux accéder à /api/admin" → Autorisation
 
-Bonnes pratiques de sécurité
+---
 
-🔰 Introduction
-
-Cette phase du projet vise à mettre en place une première couche de sécurité pour l’API logistique en utilisant Basic Authentication.
-
-Aucune autre technologie n’est abordée dans cette phase :
-
-❌ JWT
-❌ OAuth2
-❌ Sessions avancées
-❌ Docker
-❌ CI/CD
-
-L’objectif est :
-
-✔ comprendre Spring Security en profondeur
-✔ construire un POC Basic Auth solide
-✔ documenter clairement les mécanismes internes
-
-🧩 Authentification vs Autorisation
-Concept	Définition
-Authentification	Vérifier qui est l’utilisateur.
-Autorisation	Vérifier ce qu’il a le droit de faire.
-
-Exemple :
-
-"Tu es Ahmed" → Authentification
-
-"Tu peux accéder à /api/admin" → Autorisation
-
-🏗 Architecture Spring Security Moderne
+## 🏗 Architecture Spring Security Moderne
 
 Depuis Spring Security 6 :
 
-✔ plus de WebSecurityConfigurerAdapter
-✔ configuration 100% via beans
-✔ pipeline basé sur :
+* Plus de `WebSecurityConfigurerAdapter`
+* Configuration via **beans**
+* Pipeline basé sur des filtres
 
-🔑 Composants principaux
-Composant	Rôle
-SecurityFilterChain	Définit les règles de sécurité HTTP
-DelegatingFilterProxy	Pont entre Spring Security et le container servlet
-AuthenticationManager	Orchestre l’authentification
-AuthenticationProvider	Exécute la logique d’authentification
-UserDetailsService	Charge les utilisateurs
-PasswordEncoder	Hash des mots de passe (BCrypt recommandé)
-Schéma (flux général)
+### 🔑 Composants principaux
+
+| Composant              | Rôle                           |
+| ---------------------- | ------------------------------ |
+| SecurityFilterChain    | Définit les règles HTTP        |
+| DelegatingFilterProxy  | Pont avec le container servlet |
+| AuthenticationManager  | Orchestration                  |
+| AuthenticationProvider | Logique d’authentification     |
+| UserDetailsService     | Chargement des utilisateurs    |
+| PasswordEncoder        | Hash des mots de passe         |
+
+### Flux général
+
+```
 HTTP Request
-│
-▼
-┌──────────────────────────┐
-│   SecurityFilterChain    │
-└──────────────────────────┘
-│
-▼
+   |
+   v
+SecurityFilterChain
+   |
 AuthenticationManager
-│
-▼
+   |
 AuthenticationProvider
-│
-▼
+   |
 UserDetailsService + PasswordEncoder
+```
 
-🛡 La Security Filter Chain — Explication des filtres
+---
+
+## 🛡 Security Filter Chain
 
 Spring Security fonctionne comme une chaîne de filtres.
 
-Voici les filtres principaux utiles pour Basic Auth :
+### Filtres principaux
 
-Filtre	Rôle
-SecurityContextPersistenceFilter	Charge/mets à jour le SecurityContext
-BasicAuthenticationFilter	Analyse le header Authorization: Basic xxx
-UsernamePasswordAuthenticationFilter	Gère formLogin (pas utilisé ici)
-AuthorizationFilter	Vérifie les permissions (roles/authorities)
-🔍 Zoom : BasicAuthenticationFilter
-1. Vérifie la présence du header Authorization
-2. Décodage Base64 → "username:password"
-3. Authentification via AuthenticationManager
-4. Création du SecurityContext si succès
-5. Retour 401 si échec
+| Filtre                               | Rôle                            |
+| ------------------------------------ | ------------------------------- |
+| SecurityContextPersistenceFilter     | Gestion du contexte             |
+| BasicAuthenticationFilter            | Analyse du header Authorization |
+| UsernamePasswordAuthenticationFilter | Form login                      |
+| AuthorizationFilter                  | Vérification des rôles          |
 
-ASCII Diagramme intégré au README :
-Client → HTTP Request
-Authorization: Basic dXNlcjpwYXNz
-│
-▼
+---
+
+## 🔍 BasicAuthenticationFilter – Détail
+
+1. Vérifie le header Authorization
+2. Decode Base64
+3. Appelle AuthenticationManager
+4. Crée le SecurityContext
+5. Retourne 401 en cas d’échec
+
+```
+Client
+  |
+Authorization: Basic xxx
+  |
 BasicAuthenticationFilter
-│
-decode Base64 → username:password
-│
-▼
+  |
 AuthenticationManager
-│
-▼
+  |
 AuthenticationProvider
-│
-├── compare password (BCrypt)
-▼
-✔ Success → SecurityContext stored
-✘ Failure → 401 Unauthorized
+  |
+✔ Success → SecurityContext
+✘ Failure → 401
+```
 
-🔑 Basic Auth — Théorie & Sécurité
-➤ Définition
+---
 
-Basic Auth envoie les credentials dans le header :
+## 🔑 Basic Authentication – Théorie
 
-Authorization: Basic base64("username:password")
+Header utilisé :
 
+```
+Authorization: Basic base64(username:password)
+```
 
-Attention : Base64 ≠ sécurité
-C’est juste une encodage, pas un chiffrement.
+⚠ Base64 n’est **pas un chiffrement**
 
-👉 Basic Auth doit impérativement être utilisé avec HTTPS
+➡ Toujours utiliser HTTPS
 
-➤ Exemple d'encodage
-username: admin
-password: 1234
-"admin:1234" → Base64 → YWRtaW46MTIzNA==
+### Exemple
 
-➤ Limites
+```
+admin:1234 → YWRtaW46MTIzNA==
+```
 
-❌ vulnérable sans HTTPS
-❌ mots de passe envoyés à chaque requête
-❌ pas adapté aux applications modernes (mobile, SPA)
+### Limites
 
-⚙ Configuration Spring Security — POC Basic Auth
-📄 SecurityConfig.java
+* Credentials envoyés à chaque requête
+* Vulnérable sans HTTPS
+* Pas adapté aux SPA modernes
+
+---
+
+## ⚙ Configuration Spring Security
+
+### SecurityConfig.java
+
+```java
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -173,16 +177,16 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/inventory/**").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
-                        .requestMatchers("/api/orders/**").hasAnyRole("CLIENT", "ADMIN")
-                        .anyRequest().authenticated()
-                )
-                .httpBasic(Customizer.withDefaults());
+            .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/inventory/**").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
+                .requestMatchers("/api/orders/**").hasAnyRole("CLIENT", "ADMIN")
+                .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
@@ -196,100 +200,99 @@ public class SecurityConfig {
     public InMemoryUserDetailsManager userDetailsManager() {
 
         UserDetails admin = User.builder()
-                .username("admin")
-                .password(passwordEncoder().encode("admin123"))
-                .roles("ADMIN")
-                .build();
+            .username("admin")
+            .password(passwordEncoder().encode("admin123"))
+            .roles("ADMIN")
+            .build();
 
         UserDetails manager = User.builder()
-                .username("manager")
-                .password(passwordEncoder().encode("manager123"))
-                .roles("WAREHOUSE_MANAGER")
-                .build();
+            .username("manager")
+            .password(passwordEncoder().encode("manager123"))
+            .roles("WAREHOUSE_MANAGER")
+            .build();
 
         UserDetails client = User.builder()
-                .username("client")
-                .password(passwordEncoder().encode("client123"))
-                .roles("CLIENT")
-                .build();
+            .username("client")
+            .password(passwordEncoder().encode("client123"))
+            .roles("CLIENT")
+            .build();
 
         return new InMemoryUserDetailsManager(admin, manager, client);
     }
 }
+```
 
-📁 Rôles et accès des endpoints
-Endpoint	ADMIN	WAREHOUSE_MANAGER	CLIENT
-/api/admin/**	✔	✘	✘
-/api/inventory/**	✔	✔	✘
-/api/products/**	✔	✔	✘
-/api/orders/**	✔	✘	✔
-/api/shipments/**	✔	✔	✘
-🧪 Tests avec Postman / cURL
-➤ 1. Test via Postman
+---
 
-Auth → Type : Basic Auth
+## 📁 Rôles et accès
 
-Username : admin
+| Endpoint          | ADMIN | MANAGER | CLIENT |
+| ----------------- | ----- | ------- | ------ |
+| /api/admin/**     | ✔     | ✘       | ✘      |
+| /api/inventory/** | ✔     | ✔       | ✘      |
+| /api/orders/**    | ✔     | ✘       | ✔      |
 
-Password : admin123
+---
 
-➤ 2. Test via cURL
+## 🧪 Tests
+
+### Postman
+
+* Type : Basic Auth
+* Username : admin
+* Password : admin123
+
+### cURL
+
+```bash
 curl -u admin:admin123 http://localhost:8080/api/admin/products
+```
 
+### Réponses
 
-Réponses attendues :
+| Code | Signification   |
+| ---- | --------------- |
+| 200  | Succès          |
+| 401  | Non authentifié |
+| 403  | Non autorisé    |
 
-200 → succès
+---
 
-401 → pas authentifié
+## 🧬 Schéma interne complet
 
-403 → authentifié mais pas autorisé
+```
+Client
+  |
+Authorization Header
+  |
+BasicAuthenticationFilter
+  |
+AuthenticationManager
+  |
+AuthenticationProvider
+  |
+BCrypt
+  |
+SecurityContext
+  |
+Authorization (roles)
+  |
+Controller REST
+```
 
-🧬 Schéma complet : Flux interne Basic Auth
-┌────────────────────────────┐
-│        Client API          │
-└────────────────────────────┘
-│
-▼
-Authorization: Basic <Base64>
-│
-▼
-┌──────────────────────────────────┐
-│     BasicAuthenticationFilter    │
-└──────────────────────────────────┘
-│
-decode Base64 → username/password
-│
-▼
-┌──────────────────────────────────┐
-│       AuthenticationManager      │
-└──────────────────────────────────┘
-│
-▼
-┌──────────────────────────────────┐
-│       AuthenticationProvider     │
-└──────────────────────────────────┘
-│
-compares password (BCrypt)
-│
-┌────────────┴───────────┐
-│                        │
-(success)                 (failure)
-│                        │
-▼                        ▼
-SecurityContext created         401 Unauthorized
-│
-▼
-AccessDecisionManager (roles)
-│
-▼
-Endpoint Controller REST
+---
 
-🛡 Bonnes pratiques
+## 🛡 Bonnes pratiques
 
-✔ Toujours utiliser HTTPS
-✔ Ne jamais stocker un mot de passe en clair
-✔ Toujours utiliser BCrypt
-✔ Minimiser les permissions
-✔ Logger les tentatives d’accès non autorisé
-✔ Préférer JWT ou OAuth2 pour la version finale
+* Toujours utiliser HTTPS
+* Utiliser BCrypt
+* Ne jamais stocker les mots de passe en clair
+* Limiter les rôles
+* Logger les accès refusés
+* Migrer vers JWT/OAuth2 en production
+
+---
+
+## ✅ Conclusion
+
+Cette implémentation constitue une base solide pour comprendre Spring Security et sécuriser une API REST avec Basic Authentication avant d’évoluer vers des solutions modernes comme JWT ou OAuth2.

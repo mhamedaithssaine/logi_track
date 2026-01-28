@@ -3,6 +3,7 @@ package org.example.logistics.dto.warehousemanager;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,6 +22,7 @@ public class WarehouseManagerRegisterDto {
     @Email(message = "Format d'email invalide")
     private String email;
 
+    @Pattern(regexp = "^(\\+212|0)[5-7][0-9]{8}$", message = "Format de téléphone marocain invalide")
     private String phone;
 
     @NotBlank(message = "Le mot de passe est obligatoire")
