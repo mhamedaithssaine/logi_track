@@ -10,6 +10,7 @@ import org.example.logistics.entity.Enum.Role;
 import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.WarehouseManagerMapper;
+import org.example.logistics.repository.RefreshTokenRepository;
 import org.example.logistics.repository.WarehouseManagerRepository;
 import org.example.logistics.repository.WarehouseRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,10 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -35,6 +39,9 @@ class WarehouseManagerServiceTest {
 
     @Mock
     private WarehouseRepository warehouseRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
     private WarehouseManagerMapper warehouseManagerMapper;
@@ -399,6 +406,7 @@ class WarehouseManagerServiceTest {
         // Arrange
         when(warehouseManagerRepository.findById(1L)).thenReturn(Optional.of(warehouseManager));
         when(warehouseManagerMapper.toDto(warehouseManager)).thenReturn(responseDto);
+        doNothing().when(refreshTokenRepository).deleteAllByUserId(1L);
         doNothing().when(warehouseManagerRepository).deleteById(1L);
 
         // Act
@@ -409,6 +417,7 @@ class WarehouseManagerServiceTest {
         assertEquals("Warehouse Manager supprimé avec succès", result.getMessage());
 
         verify(warehouseManagerRepository, times(1)).findById(1L);
+        verify(refreshTokenRepository, times(1)).deleteAllByUserId(1L);
         verify(warehouseManagerRepository, times(1)).deleteById(1L);
     }
 
@@ -424,6 +433,7 @@ class WarehouseManagerServiceTest {
 
         assertTrue(exception.getMessage().contains("WarehouseManager"));
         verify(warehouseManagerRepository, times(1)).findById(999L);
+        verify(refreshTokenRepository, never()).deleteAllByUserId(anyLong());
         verify(warehouseManagerRepository, never()).deleteById(any());
     }
 
@@ -456,6 +466,48 @@ class WarehouseManagerServiceTest {
         // Act & Assert
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             warehouseManagerService.deactivate(999L);
+        });
+
+        assertTrue(exception.getMessage().contains("WarehouseManager"));
+        verify(warehouseManagerRepository, times(1)).findById(999L);
+        verify(warehouseManagerRepository, never()).save(any());
+    }
+
+    @Test
+    void testGetAll_Success() {
+        when(warehouseManagerRepository.findAll()).thenReturn(Arrays.asList(warehouseManager));
+        when(warehouseManagerMapper.toDto(warehouseManager)).thenReturn(responseDto);
+
+        List<WarehouseManagerResponseDto> result = warehouseManagerService.getAll();
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(1L, result.get(0).getId());
+        verify(warehouseManagerRepository, times(1)).findAll();
+    }
+
+    @Test
+    void testActivate_Success() {
+        warehouseManager.setActive(false);
+        when(warehouseManagerRepository.findById(1L)).thenReturn(Optional.of(warehouseManager));
+        when(warehouseManagerRepository.save(any(WarehouseManager.class))).thenReturn(warehouseManager);
+        when(warehouseManagerMapper.toDto(warehouseManager)).thenReturn(responseDto);
+
+        WarehouseManagerResponseDto result = warehouseManagerService.activate(1L);
+
+        assertNotNull(result);
+        assertEquals("Warehouse Manager activé", result.getMessage());
+        assertTrue(warehouseManager.getActive());
+        verify(warehouseManagerRepository, times(1)).findById(1L);
+        verify(warehouseManagerRepository, times(1)).save(warehouseManager);
+    }
+
+    @Test
+    void testActivate_NotFound_ThrowsResourceNotFoundException() {
+        when(warehouseManagerRepository.findById(999L)).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
+            warehouseManagerService.activate(999L);
         });
 
         assertTrue(exception.getMessage().contains("WarehouseManager"));

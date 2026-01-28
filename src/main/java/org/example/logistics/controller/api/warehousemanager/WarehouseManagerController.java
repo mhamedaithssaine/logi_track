@@ -12,12 +12,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/warehouse-managers")
 public class WarehouseManagerController {
 
     @Autowired
-    private  WarehouseManagerService warehouseManagerService;
+    private WarehouseManagerService warehouseManagerService;
+
+    @GetMapping
+    public ResponseEntity<List<WarehouseManagerResponseDto>> getAll() {
+        List<WarehouseManagerResponseDto> managers = warehouseManagerService.getAll();
+        return ResponseEntity.ok(managers);
+    }
 
     @PostMapping("/register")
     public ResponseEntity<WarehouseManagerResponseDto> register(@Valid @RequestBody WarehouseManagerRegisterDto dto) {
@@ -60,6 +68,12 @@ public class WarehouseManagerController {
     @PatchMapping("/{id}/deactivate")
     public ResponseEntity<WarehouseManagerResponseDto> deactivate(@PathVariable Long id) {
         WarehouseManagerResponseDto response = warehouseManagerService.deactivate(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<WarehouseManagerResponseDto> activate(@PathVariable Long id) {
+        WarehouseManagerResponseDto response = warehouseManagerService.activate(id);
         return ResponseEntity.ok(response);
     }
 }

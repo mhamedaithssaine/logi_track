@@ -10,9 +10,13 @@ import org.example.logistics.entity.WarehouseManager;
 import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.WarehouseManagerMapper;
+import org.example.logistics.repository.RefreshTokenRepository;
 import org.example.logistics.repository.WarehouseManagerRepository;
 import org.example.logistics.repository.WarehouseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,13 +25,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class WarehouseManagerService {
 
     @Autowired
-    private  WarehouseManagerRepository warehouseManagerRepository;
+    private WarehouseManagerRepository warehouseManagerRepository;
     @Autowired
-    private  WarehouseRepository warehouseRepository;
+    private WarehouseRepository warehouseRepository;
     @Autowired
-    private  WarehouseManagerMapper warehouseManagerMapper;
+    private RefreshTokenRepository refreshTokenRepository;
     @Autowired
-    private  PasswordEncoder passwordEncoder;
+    private WarehouseManagerMapper warehouseManagerMapper;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Transactional(readOnly = true)
+    public List<WarehouseManagerResponseDto> getAll() {
+        return warehouseManagerRepository.findAll().stream()
+                .map(warehouseManagerMapper::toDto)
+                .collect(Collectors.toList());
+    }
 
     @Transactional
     public WarehouseManagerResponseDto register(WarehouseManagerRegisterDto dto) {
@@ -35,18 +48,15 @@ public class WarehouseManagerService {
             throw new ConflictException("Email déjà utilisé : " + dto.getEmail());
         }
 
-        // Vérifier que le warehouse existe
         Warehouse warehouse = warehouseRepository.findById(dto.getWarehouseId())
                 .orElseThrow(() -> ResourceNotFoundException.withId("Warehouse", dto.getWarehouseId()));
 
         WarehouseManager manager = warehouseManagerMapper.toEntity(dto);
 
-        // Encoder le mot de passe
         if (dto.getPassword() != null) {
             manager.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         }
 
-        // Associer le warehouse
         manager.setWarehouse(warehouse);
 
         WarehouseManager saved = warehouseManagerRepository.save(manager);
@@ -109,10 +119,10 @@ public class WarehouseManagerService {
                 .orElseThrow(() -> ResourceNotFoundException.withId("WarehouseManager", id));
 
         WarehouseManagerResponseDto response = warehouseManagerMapper.toDto(manager);
-
-        warehouseManagerRepository.deleteById(id);
-
         response.setMessage("Warehouse Manager supprimé avec succès");
+
+        refreshTokenRepository.deleteAllByUserId(id);
+        warehouseManagerRepository.deleteById(id);
         return response;
     }
 
@@ -126,6 +136,17 @@ public class WarehouseManagerService {
 
         WarehouseManagerResponseDto response = warehouseManagerMapper.toDto(saved);
         response.setMessage("Warehouse Manager désactivé");
+        return response;
+    }
+
+    @Transactional
+    public WarehouseManagerResponseDto activate(Long id) {
+        WarehouseManager manager = warehouseManagerRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.withId("WarehouseManager", id));
+        manager.setActive(true);
+        WarehouseManager saved = warehouseManagerRepository.save(manager);
+        WarehouseManagerResponseDto response = warehouseManagerMapper.toDto(saved);
+        response.setMessage("Warehouse Manager activé");
         return response;
     }
 }
