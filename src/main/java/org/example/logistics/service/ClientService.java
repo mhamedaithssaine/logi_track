@@ -6,6 +6,7 @@ import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.ClientMapper;
 import org.example.logistics.repository.ClientRepository;
+import org.example.logistics.repository.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,8 @@ public class ClientService {
 
     @Autowired
     private ClientRepository clientRepository;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
     @Autowired
     private ClientMapper clientMapper;
     @Autowired
@@ -115,10 +118,11 @@ public class ClientService {
                 .orElseThrow(() -> ResourceNotFoundException.withId("Client", id));
 
         ClientResponseDto response = clientMapper.toDto(client);
-
-        clientRepository.deleteById(id);
         response.setMessage("Client supprimé avec succès");
-    return response;
+
+        refreshTokenRepository.deleteAllByUserId(id);
+        clientRepository.deleteById(id);
+        return response;
     }
 
     @Transactional

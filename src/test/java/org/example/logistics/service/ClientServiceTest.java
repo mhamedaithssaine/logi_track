@@ -10,6 +10,7 @@ import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.ClientMapper;
 import org.example.logistics.repository.ClientRepository;
+import org.example.logistics.repository.RefreshTokenRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class ClientServiceTest {
 
     @Mock
     private ClientRepository clientRepository;
+
+    @Mock
+    private RefreshTokenRepository refreshTokenRepository;
 
     @Mock
     private ClientMapper clientMapper;
@@ -348,6 +352,7 @@ class ClientServiceTest {
         // Given
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(clientMapper.toDto(client)).thenReturn(responseDto);
+        doNothing().when(refreshTokenRepository).deleteAllByUserId(1L);
         doNothing().when(clientRepository).deleteById(1L);
 
         // When
@@ -358,6 +363,7 @@ class ClientServiceTest {
         assertEquals("Client supprimé avec succès", result.getMessage());
 
         verify(clientRepository, times(1)).findById(1L);
+        verify(refreshTokenRepository, times(1)).deleteAllByUserId(1L);
         verify(clientRepository, times(1)).deleteById(1L);
     }
 
@@ -373,6 +379,7 @@ class ClientServiceTest {
         });
 
         verify(clientRepository, times(1)).findById(999L);
+        verify(refreshTokenRepository, never()).deleteAllByUserId(anyLong());
         verify(clientRepository, never()).deleteById(anyLong());
     }
 
