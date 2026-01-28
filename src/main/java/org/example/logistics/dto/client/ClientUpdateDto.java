@@ -20,6 +20,7 @@ public class ClientUpdateDto {
     @Email(message = "Email invalide")
     @NotBlank(message = "Email requis")
     private String email;
+
     @Size(min = 6, max = 255, message = "Le mot de passe doit contenir au moins 6 caractères")
     private String password;
 
