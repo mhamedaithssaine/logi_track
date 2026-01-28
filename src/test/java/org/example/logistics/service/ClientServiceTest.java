@@ -3,6 +3,7 @@ package org.example.logistics.service;
 import org.example.logistics.dto.client.ClientLoginDto;
 import org.example.logistics.dto.client.ClientRegisterDto;
 import org.example.logistics.dto.client.ClientResponseDto;
+import org.example.logistics.dto.client.ClientUpdateDto;
 import org.example.logistics.entity.Client;
 import org.example.logistics.entity.Enum.Role;
 import org.example.logistics.exception.ConflictException;
@@ -43,6 +44,7 @@ class ClientServiceTest {
     private ClientService clientService;
 
     private ClientRegisterDto registerDto;
+    private ClientUpdateDto updateDto;
     private ClientLoginDto loginDto;
     private Client client;
     private ClientResponseDto responseDto;
@@ -83,6 +85,13 @@ class ClientServiceTest {
                 .address("123 Main St, Paris")
                 .role("CLIENT")
                 .active(true)
+                .build();
+
+        updateDto = ClientUpdateDto.builder()
+                .name("John Doe")
+                .email("john.doe@example.com")
+                .phone("0612345678")
+                .address("123 Main St, Paris")
                 .build();
     }
 
@@ -262,21 +271,22 @@ class ClientServiceTest {
     @DisplayName("Should update client successfully")
     void testUpdate_Success() {
         // Given
+        updateDto.setName("Jane Doe Updated");
+        updateDto.setPhone("0698765432");
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        doNothing().when(clientMapper).updateEntityFromDto(any(ClientUpdateDto.class), eq(client));
         when(clientRepository.save(any(Client.class))).thenReturn(client);
         when(clientMapper.toDto(client)).thenReturn(responseDto);
 
-        registerDto.setName("Jane Doe Updated");
-        registerDto.setPhone("0698765432");
-
         // When
-        ClientResponseDto result = clientService.update(1L, registerDto);
+        ClientResponseDto result = clientService.update(1L, updateDto);
 
         // Then
         assertNotNull(result);
         assertEquals("Client mis à jour", result.getMessage());
 
         verify(clientRepository, times(1)).findById(1L);
+        verify(clientMapper, times(1)).updateEntityFromDto(any(ClientUpdateDto.class), eq(client));
         verify(clientRepository, times(1)).save(any(Client.class));
     }
 
@@ -284,15 +294,15 @@ class ClientServiceTest {
     @DisplayName("Should update client with new password")
     void testUpdate_WithPassword() {
         // Given
+        updateDto.setPassword("NewPassword456");
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        doNothing().when(clientMapper).updateEntityFromDto(any(ClientUpdateDto.class), eq(client));
         when(passwordEncoder.encode("NewPassword456")).thenReturn("$2a$10$newEncodedPassword");
         when(clientRepository.save(any(Client.class))).thenReturn(client);
         when(clientMapper.toDto(client)).thenReturn(responseDto);
 
-        registerDto.setPassword("NewPassword456");
-
         // When
-        ClientResponseDto result = clientService.update(1L, registerDto);
+        ClientResponseDto result = clientService.update(1L, updateDto);
 
         // Then
         assertNotNull(result);
@@ -303,14 +313,14 @@ class ClientServiceTest {
     @DisplayName("Should not update password if blank")
     void testUpdate_BlankPassword() {
         // Given
+        updateDto.setPassword("   ");
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        doNothing().when(clientMapper).updateEntityFromDto(any(ClientUpdateDto.class), eq(client));
         when(clientRepository.save(any(Client.class))).thenReturn(client);
         when(clientMapper.toDto(client)).thenReturn(responseDto);
 
-        registerDto.setPassword("   ");
-
         // When
-        ClientResponseDto result = clientService.update(1L, registerDto);
+        ClientResponseDto result = clientService.update(1L, updateDto);
 
         // Then
         assertNotNull(result);
@@ -325,7 +335,7 @@ class ClientServiceTest {
 
         // When & Then
         assertThrows(ResourceNotFoundException.class, () -> {
-            clientService.update(999L, registerDto);
+            clientService.update(999L, updateDto);
         });
 
         verify(clientRepository, times(1)).findById(999L);
@@ -401,32 +411,69 @@ class ClientServiceTest {
         verify(clientRepository, never()).save(any(Client.class));
     }
 
-    @ParameterizedTest
-    @DisplayName("Should handle update with various null fields")
-    @MethodSource("provideNullFieldScenarios")
-    void testUpdate_NullFields(String name, String phone, String address) {
+    @Test
+    @DisplayName("Should activate client successfully")
+    void testActivate_Success() {
         // Given
-        registerDto.setName(name);
-        registerDto.setPhone(phone);
-        registerDto.setAddress(address);
+        client.setActive(false);
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(clientRepository.save(any(Client.class))).thenReturn(client);
+
+        // When
+        ClientResponseDto result = clientService.activate(1L);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("Client activé", result.getMessage());
+        assertTrue(client.getActive());
+        assertEquals(1L, result.getId());
+        assertEquals("John Doe", result.getName());
+
+        verify(clientRepository, times(1)).findById(1L);
+        verify(clientRepository, times(1)).save(client);
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException when activating non-existent client")
+    void testActivate_NotFound() {
+        // Given
+        when(clientRepository.findById(999L)).thenReturn(Optional.empty());
+
+        // When & Then
+        assertThrows(ResourceNotFoundException.class, () -> {
+            clientService.activate(999L);
+        });
+
+        verify(clientRepository, times(1)).findById(999L);
+        verify(clientRepository, never()).save(any(Client.class));
+    }
+
+    @ParameterizedTest
+    @DisplayName("Should handle update with optional phone/address")
+    @MethodSource("provideOptionalFieldScenarios")
+    void testUpdate_OptionalFields(String phone, String address) {
+        // Given
+        updateDto.setPhone(phone);
+        updateDto.setAddress(address);
 
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        doNothing().when(clientMapper).updateEntityFromDto(any(ClientUpdateDto.class), eq(client));
         when(clientRepository.save(any(Client.class))).thenReturn(client);
         when(clientMapper.toDto(client)).thenReturn(responseDto);
 
         // When
-        ClientResponseDto result = clientService.update(1L, registerDto);
+        ClientResponseDto result = clientService.update(1L, updateDto);
 
         // Then
         assertNotNull(result);
         verify(clientRepository, times(1)).save(any(Client.class));
     }
 
-    private static Stream<Arguments> provideNullFieldScenarios() {
+    private static Stream<Arguments> provideOptionalFieldScenarios() {
         return Stream.of(
-                Arguments.of(null, "0612345678", "Address"),
-                Arguments.of("Name", null, "Address"),
-                Arguments.of("Name", "0612345678", null)
+                Arguments.of("0612345678", "Address"),
+                Arguments.of(null, "Address"),
+                Arguments.of("0612345678", null)
         );
     }
 }
