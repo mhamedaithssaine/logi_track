@@ -14,7 +14,7 @@ public class SalesOrderCreateDto {
     @NotNull(message = "Client ID est obligatoire")
     private Long clientId;
 
-    @NotNull(message = "Warehouse ID est obligatoire")
+    /** Optionnel : le manager assigne l'entrepôt après création */
     private Long warehouseId;
 
     @NotEmpty(message = "La commande doit contenir au moins une ligne")

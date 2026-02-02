@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/purchase-orders")
 public class PurchaseOrderController {
@@ -17,6 +19,16 @@ public class PurchaseOrderController {
     @Autowired
     private PurchaseOrderCancelService purchaseOrderCancelService;
 
+
+    @GetMapping
+    public ResponseEntity<List<PurchaseOrderResponseDto>> getAll() {
+        return ResponseEntity.ok(purchaseOrderService.getAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<PurchaseOrderResponseDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(purchaseOrderService.getById(id));
+    }
 
     @PostMapping
     public ResponseEntity<PurchaseOrderResponseDto> createPurchaseOrder(@Valid @RequestBody PurchaseOrderCreateDto dto) {

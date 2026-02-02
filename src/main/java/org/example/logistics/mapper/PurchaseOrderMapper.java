@@ -32,5 +32,6 @@ public interface PurchaseOrderMapper {
 
     @Mapping(source = "product.id", target = "productId")
     @Mapping(source = "product.name", target = "productName")
+    @Mapping(source = "receivedQty", target = "receivedQuantity")
     PurchaseOrderResponseDto.LineResponseDto toLineDto(PurchaseOrderLine line);
 }

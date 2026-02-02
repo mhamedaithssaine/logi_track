@@ -2,7 +2,6 @@ package org.example.logistics.repository;
 
 import org.example.logistics.entity.Enum.Status;
 import org.example.logistics.entity.SalesOrder;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -15,12 +14,18 @@ import java.util.Optional;
 @Repository
 public interface SalesOrderRepository extends JpaRepository<SalesOrder,Long> {
     List<SalesOrder> findByClientId(Long clientId);
+    List<SalesOrder> findByClientIdOrderByCreatedAtDesc(Long clientId);
+    List<SalesOrder> findByWarehouseIdOrderByCreatedAtDesc(Long warehouseId);
+
+    @Query("SELECT s FROM SalesOrder s WHERE (s.warehouse.id = :warehouseId OR s.warehouse IS NULL) ORDER BY s.createdAt DESC")
+    List<SalesOrder> findByWarehouseIdOrUnassignedOrderByCreatedAtDesc(@Param("warehouseId") Long warehouseId);
+
     Optional<SalesOrder> findByIdAndStatus(Long id , Status status);
 
     Optional<SalesOrder> findById(Long id);
 
     @Query("SELECT s FROM SalesOrder s WHERE s.id = :id " +
-            "AND s.status IN ('CREATED', 'RESERVED', 'PARTIAL_RESERVED')")
+            "AND s.status IN ('CREATED', 'CONFIRMED', 'RESERVED', 'PARTIAL_RESERVED')")
 
 
     Optional<SalesOrder> findCancelableOrderById(@Param("id") Long id);

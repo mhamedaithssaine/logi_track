@@ -26,7 +26,7 @@ public class OrderCancelService {
     private final OrderCancelMapper orderCancelMapper;
 
     private static final List<Status> CANCELABLE_STATUSES = List.of(
-            Status.CREATED, Status.RESERVED, Status.PARTIAL_RESERVED
+            Status.CREATED, Status.CONFIRMED, Status.RESERVED, Status.PARTIAL_RESERVED
     );
 
     @Transactional
@@ -40,10 +40,11 @@ public class OrderCancelService {
         int totalStockFreed = 0;
         int linesCanceled = 0;
 
-        // Libérer le stock réservé
-        if (order.getLines() != null && !order.getLines().isEmpty()) {
+        // Libérer le stock réservé uniquement si la commande a un entrepôt assigné (sinon rien n'a été réservé)
+        if (order.getWarehouse() != null && order.getLines() != null && !order.getLines().isEmpty()) {
+            Long warehouseId = order.getWarehouse().getId();
             for (SalesOrderLine line : order.getLines()) {
-                int freed = freeReservedStock(line, order.getWarehouse().getId());
+                int freed = freeReservedStock(line, warehouseId);
                 totalStockFreed += freed;
                 linesCanceled++;
 

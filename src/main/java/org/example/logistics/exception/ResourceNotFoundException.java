@@ -22,9 +22,9 @@ public class ResourceNotFoundException extends RuntimeException {
         );
     }
 
-    public static ResourceNotFoundException withString(String resourceName , String resourceNameSku, String sku ){
+    public static ResourceNotFoundException withString(String resourceName, String fieldName, String value) {
         return new ResourceNotFoundException(
-                resourceName +"avec ce :"+ resourceNameSku +"non trouve : "+ sku
+                resourceName + " avec " + fieldName + " : " + value
         );
     }
 }

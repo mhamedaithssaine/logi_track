@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface ShipmentRepository extends JpaRepository<Shipment,Long> {
     Optional<Shipment> findBySalesOrderId(Long salesOrderId);
+    long countBySalesOrder_Client_Id(Long clientId);
 }

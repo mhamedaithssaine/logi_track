@@ -4,6 +4,7 @@ import org.example.logistics.security.CustomUserDetailsService;
 import org.example.logistics.security.JwtAuthenticationFilter;
 import org.example.logistics.security.SecurityExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,17 +43,27 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/clients/register").permitAll()
                         .requestMatchers("/api/warehouse-managers/register").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/catalogue").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/*").hasAnyRole("CLIENT", "ADMIN", "WAREHOUSE_MANAGER")
                         .requestMatchers("/api/products/**").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
                         .requestMatchers("/api/suppliers/**").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
+                        .requestMatchers(HttpMethod.GET, "/api/warehouses/**").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER", "CLIENT")
                         .requestMatchers("/api/warehouses/**").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
                         .requestMatchers("/api/inventory/**").hasRole("WAREHOUSE_MANAGER")
                         .requestMatchers("/api/purchase-orders/**").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
                         .requestMatchers("/api/warehouse-managers/**").hasAnyRole("WAREHOUSE_MANAGER", "ADMIN")
                         .requestMatchers("/api/warehouse-manager/{id}/deactivate").hasRole("ADMIN")
                         .requestMatchers("/api/warehouse-manager/{id}/delete").hasRole("ADMIN")
-                        .requestMatchers("/api/orders/**").hasAnyRole("CLIENT", "WAREHOUSE_MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/orders/*/confirm").hasRole("ADMIN")
+                        .requestMatchers("/api/orders/**").hasAnyRole("CLIENT", "WAREHOUSE_MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/shipments").hasAnyRole("CLIENT", "WAREHOUSE_MANAGER")
                         .requestMatchers("/api/shipments/**").hasRole("WAREHOUSE_MANAGER")
                         .requestMatchers("/api/clients/**").hasAnyRole("CLIENT", "ADMIN")
+                        .requestMatchers("/api/stats/admin").hasRole("ADMIN")
+                        .requestMatchers("/api/stats/warehouse").hasRole("WAREHOUSE_MANAGER")
+                        .requestMatchers("/api/stats/client").hasRole("CLIENT")
+                        .requestMatchers(HttpMethod.GET, "/api/carriers").hasAnyRole("ADMIN", "WAREHOUSE_MANAGER")
+                        .requestMatchers("/api/carriers/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

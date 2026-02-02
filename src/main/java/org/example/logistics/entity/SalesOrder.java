@@ -27,7 +27,7 @@ public class SalesOrder {
     private Client client;
 
     @ManyToOne
-    @JoinColumn(name = "warehouse_id", nullable = false)
+    @JoinColumn(name = "warehouse_id", nullable = true)
     private Warehouse warehouse;
 
     @Enumerated(EnumType.STRING)

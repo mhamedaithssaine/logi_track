@@ -39,7 +39,11 @@ public class ShipmentTrackController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ShipmentFullResponseDto>> getAll() {
+    public ResponseEntity<List<ShipmentFullResponseDto>> getAll(
+            @RequestParam(required = false) Long clientId) {
+        if (clientId != null) {
+            return ResponseEntity.ok(shipmentTrackService.getAllByClientId(clientId));
+        }
         return ResponseEntity.ok(shipmentTrackService.getAllShipments());
     }
 }

@@ -26,10 +26,19 @@ public class ProductController {
         return ResponseEntity.ok(response);
     }
 
-    // READ ALL
     @GetMapping
     public ResponseEntity<List<ProductResponseDto>> getAllProducts() {
         List<ProductResponseDto> products = productService.getAllProducts();
+        return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/catalogue")
+    public ResponseEntity<List<ProductResponseDto>> getCatalogue(
+            @RequestParam(defaultValue = "true") boolean active,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String searchBy,
+            @RequestParam(required = false) String category) {
+        List<ProductResponseDto> products = productService.getCatalogue(active, search, searchBy, category);
         return ResponseEntity.ok(products);
     }
 

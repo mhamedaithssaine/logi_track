@@ -7,6 +7,7 @@ import org.example.logistics.entity.Inventory;
 import org.example.logistics.entity.Product;
 import org.example.logistics.entity.SalesOrder;
 import org.example.logistics.entity.SalesOrderLine;
+import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.OrderReserveMapper;
 import org.example.logistics.repository.InventoryRepository;
@@ -117,7 +118,7 @@ class OrderReserveServiceTest {
         verifyNoInteractions(inventoryRepository);
     }
 
-    // Cas 3 : inventaire non trouvé -> ResourceNotFoundException
+    // Cas 3 : inventaire non trouvé -> ConflictException
     @Test
     void shouldThrow_whenInventoryNotFound() {
         SalesOrderReserveDto dto = SalesOrderReserveDto.builder()
@@ -129,10 +130,11 @@ class OrderReserveServiceTest {
         when(inventoryRepository.findByProductIdAndWarehouseId(product.getId(), order.getWarehouse().getId()))
                 .thenReturn(Optional.empty());
 
-        ResourceNotFoundException ex = assertThrows(ResourceNotFoundException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> orderReserveService.reserveOrder(dto));
 
-        assertTrue(ex.getMessage().toLowerCase().contains("inventaire") || ex.getMessage().toLowerCase().contains("introuv"));
+        assertTrue(ex.getMessage().toLowerCase().contains("inventaire") || ex.getMessage().toLowerCase().contains("inbound"),
+                "Message doit indiquer inventaire absent ou INBOUND: " + ex.getMessage());
         verify(inventoryRepository, times(1)).findByProductIdAndWarehouseId(product.getId(), order.getWarehouse().getId());
     }
 

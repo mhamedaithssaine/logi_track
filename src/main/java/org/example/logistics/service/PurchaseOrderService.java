@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -47,6 +48,18 @@ PurchaseOrderService {
 
     @Autowired
     private PurchaseOrderMapper purchaseOrderMapper;
+
+    public List<PurchaseOrderResponseDto> getAll() {
+        return purchaseOrderRepository.findAll().stream()
+                .map(purchaseOrderMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public PurchaseOrderResponseDto getById(Long id) {
+        PurchaseOrder po = purchaseOrderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Commande d'achat non trouvée : ID " + id));
+        return purchaseOrderMapper.toDto(po);
+    }
 
     @Transactional
     public PurchaseOrderResponseDto createPurchaseOrder(PurchaseOrderCreateDto dto) {
@@ -148,6 +161,7 @@ PurchaseOrderService {
                     .type(MovementType.INBOUND)
                     .quantity(receivedQuantity)
                     .referenceDoc("PO" + line.getPurchaseOrder().getId())
+                    .occurredAt(LocalDateTime.now())
                     .build();
             inventoryMovementRepository.save(movement);
         }

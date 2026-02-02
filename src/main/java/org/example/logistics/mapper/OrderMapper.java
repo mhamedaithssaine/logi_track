@@ -27,17 +27,20 @@ public interface OrderMapper {
 
     @Mapping(target = "product", ignore = true)
     @Mapping(target = "price", ignore = true)
+    @Mapping(target = "backorderQty", constant = "0")
     SalesOrderLine toLineEntity(SalesOrderCreateDto.OrderLineDto lineDto);
 
     @Mapping(source = "client.id", target = "clientId")
-    @Mapping(source = "warehouse.id", target = "warehouseId")
+    @Mapping(target = "warehouseId", expression = "java(entity.getWarehouse() != null ? entity.getWarehouse().getId() : null)")
+    @Mapping(target = "warehouseName", expression = "java(entity.getWarehouse() != null ? entity.getWarehouse().getName() : null)")
     @Mapping(source = "status", target = "status")
+    @Mapping(source = "createdAt", target = "createdAt")
     @Mapping(source = "lines", target = "lines")
     SalesOrderResponseDto toDto(SalesOrder entity);
-
 
     @Mapping(source = "product.name", target = "productName")
     @Mapping(source = "product.price", target = "price")
     @Mapping(source = "product.sku", target = "sku")
+    @Mapping(source = "backorderQty", target = "backorderQty")
     SalesOrderResponseDto.OrderLineResponseDto toLineDto(SalesOrderLine line);
 }

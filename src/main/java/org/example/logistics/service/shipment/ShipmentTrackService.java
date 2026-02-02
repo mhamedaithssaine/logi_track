@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,32 @@ public class ShipmentTrackService {
     private final SalesOrderRepository salesOrderRepository;
     private final ShipmentRepository shipmentRepository;
     private final ShipmentTrackMapper shipmentTrackMapper;
+
+    public ShipmentFullResponseDto getByOrderId(Long orderId) {
+        return trackShipment(ShipmentTrackDto.builder().orderId(orderId).build());
+    }
+
+    public List<ShipmentFullResponseDto> getAllByClientId(Long clientId) {
+        List<Shipment> shipments = salesOrderRepository.findByClientIdOrderByCreatedAtDesc(clientId).stream()
+                .map(o -> shipmentRepository.findBySalesOrderId(o.getId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
+        return shipments.stream()
+                .map(s -> {
+                    ShipmentFullResponseDto dto = shipmentTrackMapper.toDto(s);
+                    if (s.getSalesOrder() != null && s.getSalesOrder().getLines() != null) {
+                        dto.setLines(s.getSalesOrder().getLines().stream()
+                                .map(l -> ShipmentFullResponseDto.LineInfo.builder()
+                                        .sku(l.getProduct().getSku())
+                                        .quantity(l.getQuantity())
+                                        .build())
+                                .toList());
+                    }
+                    return dto;
+                })
+                .toList();
+    }
 
     public ShipmentFullResponseDto trackShipment(ShipmentTrackDto dto) {
         SalesOrder order = salesOrderRepository.findById(dto.getOrderId())

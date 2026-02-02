@@ -7,6 +7,7 @@ import org.example.logistics.entity.Enum.Status;
 import org.example.logistics.entity.Inventory;
 import org.example.logistics.entity.SalesOrder;
 import org.example.logistics.entity.SalesOrderLine;
+import org.example.logistics.exception.ConflictException;
 import org.example.logistics.exception.ResourceNotFoundException;
 import org.example.logistics.mapper.OrderReserveMapper;
 import org.example.logistics.repository.InventoryRepository;
@@ -45,13 +46,17 @@ public class OrderReserveService {
         SalesOrder order = optOrder.get();
         System.out.println("Commande trouvée : ID=" + order.getId() + ", Status=" + order.getStatus());
 
-        if (order.getStatus() != Status.CREATED) {
+        if (order.getStatus() != Status.CREATED && order.getStatus() != Status.CONFIRMED) {
             log.warn("ORDER_RESERVE_FAILED orderId={} status={} reason=INVALID_STATUS",
                     order.getId(),
                     order.getStatus());
             throw new IllegalStateException("Impossible de réserver : " + order.getId());
         }
 
+        if (order.getWarehouse() == null) {
+            log.warn("ORDER_RESERVE_FAILED orderId={} reason=NO_WAREHOUSE_ASSIGNED", order.getId());
+            throw new IllegalStateException("Assignez un entrepôt à cette commande avant de réserver.");
+        }
 
         String message = "Stock réservé";
         boolean partial = false;
@@ -60,12 +65,13 @@ public class OrderReserveService {
             Optional<Inventory> optInv = inventoryRepository.findByProductIdAndWarehouseId(
                     line.getProduct().getId(), order.getWarehouse().getId());
             if (optInv.isEmpty()) {
-
+                String sku = line.getProduct().getSku();
+                String warehouseName = order.getWarehouse().getCode() != null ? order.getWarehouse().getCode() : "ID " + order.getWarehouse().getId();
                 log.error("ORDER_RESERVE_FAILED orderId={} productSku={} warehouseId={} reason=INVENTORY_NOT_FOUND",
-                        order.getId(),
-                        line.getProduct().getSku(),
-                        order.getWarehouse().getId());
-                throw ResourceNotFoundException.withString("Inventaire non trouvé pour produit " , "sku" , line.getProduct().getSku());
+                        order.getId(), sku, order.getWarehouse().getId());
+                throw new ConflictException(
+                        "Inventaire absent pour le produit " + sku + " dans l'entrepôt " + warehouseName + ". "
+                                + "Créez d'abord une réception (INBOUND) pour ce produit dans cet entrepôt.");
             }
 
             Inventory inv = optInv.get();

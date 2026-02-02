@@ -62,13 +62,37 @@ public class ProductService {
                 .build();
     }
 
-    // Read All
     @Transactional(readOnly = true)
     public List<ProductResponseDto> getAllProducts() {
         List<Product> products = productRepository.findAll();
         return products.stream()
                 .map(productMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductResponseDto> getCatalogue(boolean activeOnly, String search, String searchBy, String category) {
+        List<Product> products = activeOnly ? productRepository.findByActiveTrue() : productRepository.findAll();
+        String q = (search == null || search.isBlank()) ? null : search.trim().toLowerCase();
+        if (q != null) {
+            boolean nameOnly = "name".equalsIgnoreCase(searchBy);
+            products = products.stream()
+                    .filter(p -> {
+                        if (nameOnly)
+                            return p.getName() != null && p.getName().toLowerCase().contains(q);
+                        return (p.getSku() != null && p.getSku().toLowerCase().contains(q))
+                                || (p.getName() != null && p.getName().toLowerCase().contains(q))
+                                || (p.getCategory() != null && p.getCategory().toLowerCase().contains(q));
+                    })
+                    .collect(Collectors.toList());
+        }
+        if (category != null && !category.isBlank()) {
+            String cat = category.trim().toLowerCase();
+            products = products.stream()
+                    .filter(p -> p.getCategory() != null && p.getCategory().toLowerCase().equals(cat))
+                    .collect(Collectors.toList());
+        }
+        return products.stream().map(productMapper::toDto).collect(Collectors.toList());
     }
 
 
@@ -129,7 +153,7 @@ public class ProductService {
         Product product = productRepository.findBySku(sku)
                 .orElseThrow(() -> ResourceNotFoundException.withString("Produit", "SKU", sku));
 
-        List<Status> activeStatuses = List.of(Status.CREATED, Status.RESERVED);
+        List<Status> activeStatuses = List.of(Status.CREATED, Status.CONFIRMED, Status.RESERVED);
         boolean hasActiveOrders = salesOrderLineRepository
                 .countByProductIdAndSalesOrderStatusIn(product.getId(), activeStatuses) > 0;
 
